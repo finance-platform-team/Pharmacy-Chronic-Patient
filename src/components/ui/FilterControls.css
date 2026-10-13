@@ -1,0 +1,278 @@
+/* Compact filter controls shared by the filter bars: DateRangePicker's pill
+   trigger + portal popover, SegmentedFilter's button group, and the Reset
+   link. Reuses the existing design tokens. */
+
+/* ---- SegmentedFilter: small label + connected button group. The active
+   option uses a white chip with a brand border instead of the heavy gold
+   gradient, so it reads as "selected" without shouting. ---- */
+.filter-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+.filter-seg-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 11.5px var(--sans);
+  color: var(--dim);
+  white-space: nowrap;
+}
+.filter-seg-label svg { font-size: 11px; }
+.filter-seg-btns {
+  display: inline-flex;
+  height: 36px;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-seg-btns::-webkit-scrollbar { display: none; }
+.filter-seg-btn {
+  border: 1px solid transparent;
+  background: none;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font: 600 12px var(--sans);
+  color: var(--text-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.filter-seg-btn:hover:not(.active) {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+.filter-seg-btn.active {
+  background: var(--surface);
+  border-color: var(--brand-gold);
+  color: var(--gold-dark);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+.filter-seg-btn:focus-visible {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 1px;
+}
+.filter-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Toned options: each carries its own colour from the --tone-* tokens in
+   tokens.css (Synapse design-system status palette) - a dot while idle,
+   then a soft tint + border + text in that colour when selected. */
+.filter-seg-btn.tone-success { --tone: var(--tone-success); --tone-soft: var(--tone-success-soft); }
+.filter-seg-btn.tone-info { --tone: var(--tone-info); --tone-soft: var(--tone-info-soft); }
+.filter-seg-btn.tone-warning { --tone: var(--tone-warning); --tone-soft: var(--tone-warning-soft); }
+.filter-seg-btn.tone-danger { --tone: var(--tone-danger); --tone-soft: var(--tone-danger-soft); }
+.filter-seg-btn.tone-brand { --tone: var(--gold-dark); --tone-soft: var(--gold-soft); }
+.filter-seg-btn.tone-neutral { --tone: var(--tone-neutral); --tone-soft: var(--tone-neutral-soft); }
+.filter-seg-btn.tone-ai { --tone: var(--tone-ai); --tone-soft: var(--tone-ai-soft); }
+
+.filter-seg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--tone, var(--dim));
+}
+.filter-seg-btn[class*='tone-']:hover:not(.active) { color: var(--tone); }
+.filter-seg-btn[class*='tone-'].active {
+  background: var(--tone-soft);
+  border-color: var(--tone);
+  color: var(--tone);
+}
+.filter-seg-btn[class*='tone-'].active .filter-seg-dot {
+  box-shadow: 0 0 0 3px var(--surface);
+}
+
+.filter-seg-count {
+  font: 700 10px var(--mono);
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 0 6px;
+  line-height: 16px;
+}
+.filter-seg-btn.active .filter-seg-count {
+  color: var(--tone, var(--gold-dark));
+  border-color: transparent;
+}
+
+/* ---- Reset link: pushed to the row's end, only rendered while filtered ---- */
+.filter-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  border: none;
+  background: none;
+  padding: 6px 8px;
+  font: 600 12px var(--sans);
+  color: var(--gold-dark);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+}
+.filter-reset:hover { background: var(--gold-soft); }
+
+@media (max-width: 720px) {
+  .filter-seg { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .filter-reset { margin-left: 0; }
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--neutral-400);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-body);
+  font: 500 12px var(--sans);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 100%;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.filter-pill:hover { border-color: var(--brand-gold); }
+.filter-pill.is-open { border-color: var(--brand-gold); box-shadow: 0 0 0 3px rgba(18, 110, 92, .12); }
+.filter-pill.is-active {
+  background: var(--gold-soft);
+  border-color: var(--brand-gold);
+  color: var(--gold-dark);
+}
+.filter-pill-icon { font-size: 11px; color: var(--dim); }
+.filter-pill.is-active .filter-pill-icon { color: var(--gold-dark); }
+.filter-pill-label { color: var(--dim); font-weight: 600; }
+.filter-pill.is-active .filter-pill-label { color: var(--gold-dark); }
+.filter-pill-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.filter-pill.is-active .filter-pill-value { color: var(--gold-dark); }
+.filter-pill-caret { font-size: 9px; color: var(--dim); margin-left: 2px; }
+
+.filter-popover {
+  position: fixed;
+  z-index: 1000;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  animation: filter-pop-in .14s ease-out;
+}
+@keyframes filter-pop-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Date range popover ---- */
+.date-popover {
+  display: flex;
+  width: min(470px, calc(100vw - 16px));
+}
+.date-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-right: 1px solid var(--border);
+  min-width: 140px;
+}
+.date-preset,
+.date-clear {
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font: 500 12.5px var(--sans);
+  color: var(--text-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.date-preset:hover { background: var(--surface-hover); }
+.date-preset.is-selected { background: var(--gold-soft); color: var(--gold-dark); font-weight: 700; }
+.date-clear { margin-top: auto; color: var(--danger); font-weight: 600; }
+.date-clear:hover { background: var(--danger-soft); }
+
+.date-calendar { flex: 1; padding: 12px 14px 10px; min-width: 0; }
+.date-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.date-cal-title { font: 700 13px var(--sans); color: var(--text-primary); }
+.date-nav {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-body);
+  cursor: pointer;
+  font-size: 11px;
+}
+.date-nav:hover { background: var(--surface-hover); }
+
+.date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px 0;
+}
+.date-weekday {
+  text-align: center;
+  font: 700 10px var(--sans);
+  color: var(--dim);
+  text-transform: uppercase;
+  padding: 4px 0;
+}
+.date-day {
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: 0;
+  font: 500 12px var(--sans);
+  color: var(--text-body);
+  cursor: pointer;
+}
+.date-day:hover { background: var(--surface-hover); border-radius: var(--r-sm); }
+.date-day.is-today { font-weight: 800; color: var(--gold-dark); text-decoration: underline; text-underline-offset: 3px; }
+.date-day.in-range { background: var(--gold-soft); color: var(--gold-dark); }
+.date-day.is-edge {
+  background: var(--grad-gold);
+  color: #fff;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+}
+.date-hint {
+  margin-top: 8px;
+  font: 500 11px var(--sans);
+  color: var(--dim);
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .date-popover { flex-direction: column; }
+  .date-presets {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .date-clear { margin-top: 0; }
+}

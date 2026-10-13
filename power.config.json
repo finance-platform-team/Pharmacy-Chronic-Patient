@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "appDisplayName": "Chronic Patients",
+  "region": "prod",
+  "appType": "CodeApp",
+  "environmentId": "cd78a59b-e16f-e4aa-b0a1-8e450a70ed56",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {
+    "cd6f8af6-dfce-4662-a18e-57e3ef267287": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+      "displayName": "Microsoft Dataverse",
+      "dataSources": [
+        "commondataserviceforapps"
+      ],
+      "authenticationType": "Oauth",
+      "dataSets": {}
+    },
+    "eaad8ca7-8590-4b5e-984e-ba45ee1c2962": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+      "displayName": "SharePoint",
+      "dataSources": [
+        "chronic_patients"
+      ],
+      "dataSets": {
+        "https://andalusiagroupegypt.sharepoint.com/sites/Training": {
+          "dataSources": {
+            "chronic_patients": {
+              "tableName": "Chronic_Patients"
+            }
+          }
+        }
+      }
+    }
+  },
+  "databaseReferences": {},
+  "appId": "a295a81f-8cd5-4428-ab61-56d63ed50567"
+}

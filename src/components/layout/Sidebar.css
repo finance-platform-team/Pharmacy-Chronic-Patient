@@ -1,0 +1,233 @@
+/* Synapse icon rail — compact, glass, with the active page shown as a deep-teal tile. */
+.rail {
+  width: 92px;
+  min-width: 92px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0;
+  gap: 0;
+  border-right: 1px solid rgba(37, 80, 71, .08);
+  background:
+    radial-gradient(ellipse 180% 30% at 50% 106%, rgba(64, 255, 184, .30) 0%, rgba(64, 255, 184, .12) 38%, transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, .62), rgba(236, 243, 240, .5));
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, .5), 8px 0 24px rgba(42, 74, 67, .05);
+  backdrop-filter: blur(22px) saturate(108%);
+  position: relative;
+  z-index: 20;
+}
+
+.rail-brand {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 17px 14px 18px 15px / 15px 18px 14px 17px;
+  color: var(--synapse-mint);
+  background: #023635;
+  box-shadow: 0 10px 24px rgba(2, 54, 53, .22), inset 0 1px 0 rgba(255, 255, 255, .11);
+  font-size: 20px;
+  padding: 0;
+  cursor: pointer;
+  transition: transform .18s ease;
+}
+.rail-brand:hover { transform: translateY(-1px); }
+.rail-brand-copy { display: none; }
+
+.rail-menu {
+  width: 44px;
+  height: 44px;
+  margin-top: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, .74);
+  border-radius: 50%;
+  color: #3F5A54;
+  background: rgba(255, 255, 255, .64);
+  box-shadow: 0 6px 15px rgba(42, 74, 67, .07), inset 0 1px 0 rgba(255, 255, 255, .9);
+  transition: transform .18s ease, background .18s ease;
+  position: relative;
+}
+.rail-menu svg { width: 18px; height: 18px; }
+.rail-menu:hover { transform: translateY(-1px); background: #fff; }
+
+.rail-nav {
+  margin-top: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.rail-item {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: inherit;
+}
+.rail-item-icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(35, 77, 67, .075);
+  border-radius: 16px;
+  color: #58746D;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .84), rgba(226, 236, 232, .78));
+  box-shadow: 0 5px 13px rgba(43, 74, 66, .075), inset 0 1px 0 rgba(255, 255, 255, .96);
+  font-size: 18px;
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.rail-item-label { display: none; }
+.rail-item:hover .rail-item-icon {
+  color: #176E5D;
+  border-color: rgba(18, 110, 92, .13);
+  background: linear-gradient(145deg, #F8FCFA, #DFEDE8);
+  transform: translateY(-1px);
+}
+.rail-item.is-current .rail-item-icon {
+  color: #A9F4D8;
+  border-color: rgba(64, 255, 184, .2);
+  background: linear-gradient(145deg, #0B5A50, #023635);
+  box-shadow: 0 10px 22px rgba(2, 54, 53, .22), inset 0 1px 0 rgba(255, 255, 255, .1), 0 0 0 2px rgba(22, 128, 106, .08);
+}
+.rail-item.is-current::before {
+  content: '';
+  position: absolute;
+  right: -21px;
+  top: 50%;
+  width: 4px;
+  height: 22px;
+  border-radius: 3px;
+  background: #16806A;
+  box-shadow: 0 0 9px rgba(22, 128, 106, .38);
+  transform: translateY(-50%);
+}
+
+/* Hover label, the same deep-teal tooltip the reference rail uses. */
+.rail-item[data-tooltip]:hover::after,
+.rail-menu[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 7px 10px;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--synapse-deep);
+  font: 600 12px var(--sans);
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(2, 54, 53, .18);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Pulse drawer opens on top of the rail */
+.psn-root.pulse-over-sidebar { --psn-z: 1200; }
+
+.mobile-backdrop { display: none; position: fixed; inset: 0; background: rgba(2, 30, 28, .42); z-index: 1050; }
+.mobile-backdrop.show { display: block; }
+
+/* ---------- Dark ---------- */
+:root[data-theme="dark"] .rail {
+  border-right-color: rgba(205, 235, 226, .055);
+  background:
+    radial-gradient(ellipse 180% 30% at 50% 106%, rgba(64, 255, 184, .14), transparent 70%),
+    linear-gradient(180deg, rgba(18, 34, 32, .92), rgba(10, 25, 23, .9));
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, .035);
+}
+:root[data-theme="dark"] .rail-brand { background: #061D1A; border-color: rgba(64, 255, 184, .13); box-shadow: 0 10px 24px rgba(0, 0, 0, .3); }
+:root[data-theme="dark"] .rail-menu { color: #D8E8E3; border-color: rgba(215, 239, 233, .06); background: #19312C; box-shadow: 0 6px 14px rgba(0, 0, 0, .15); }
+:root[data-theme="dark"] .rail-menu:hover { background: #203A34; }
+:root[data-theme="dark"] .rail-item-icon {
+  color: #91AAA3;
+  border-color: rgba(255, 255, 255, .055);
+  background: linear-gradient(145deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .022));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+:root[data-theme="dark"] .rail-item:hover .rail-item-icon { color: #D8EEE7; background: rgba(255, 255, 255, .07); }
+:root[data-theme="dark"] .rail-item.is-current .rail-item-icon {
+  color: #A9F4D8;
+  border-color: rgba(64, 255, 184, .16);
+  background: linear-gradient(145deg, #0B5A50, #023635);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, .25), 0 0 0 2px rgba(64, 255, 184, .055);
+}
+
+/* ---------- Desktop expanded: a click on the rail toggles a wider rail with labels ---------- */
+.rail { cursor: pointer; }
+.rail-item, .rail-menu { cursor: pointer; }
+.rail { transition: width .25s ease-in-out, min-width .25s ease-in-out; }
+@media (min-width: 861px) {
+  .rail.is-expanded {
+    width: 240px;
+    min-width: 240px;
+    align-items: stretch;
+    padding: 18px 16px;
+  }
+  .rail.is-expanded .rail-brand { position: absolute; }
+  .rail.is-expanded .rail-brand-copy { display: flex; flex-direction: column; justify-content: center; min-height: 52px; padding-left: 64px; white-space: nowrap; overflow: hidden; }
+  .rail.is-expanded .rail-brand-copy strong { font: 700 15px var(--sans); color: var(--text-primary); }
+  .rail.is-expanded .rail-brand-copy small { font: 500 11px var(--sans); color: var(--brand-gold); margin-top: 3px; }
+  .rail.is-expanded .rail-menu { margin-left: 3px; }
+  .rail.is-expanded .rail-nav { align-items: stretch; gap: 10px; }
+  .rail.is-expanded .rail-item { width: 100%; display: flex; align-items: center; gap: 12px; justify-content: flex-start; }
+  .rail.is-expanded .rail-item-label { display: block; font: 600 13.5px var(--sans); color: var(--text-primary); text-align: left; white-space: nowrap; }
+  .rail.is-expanded .rail-item.is-current::before { right: -17px; }
+  .rail.is-expanded .rail-item[data-tooltip]:hover::after { display: none; }
+
+  /* Open together: the rail clips its labels while it widens, and the labels
+     fade in over the same .25s, so text is revealed with the rail, not before it. */
+  .rail.is-expanded { overflow: hidden; }
+  .rail.is-expanded .rail-brand-copy,
+  .rail.is-expanded .rail-item-label { animation: rail-label-in .25s ease-in-out both; }
+}
+@keyframes rail-label-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail, .rail.is-expanded .rail-brand-copy, .rail.is-expanded .rail-item-label { transition: none; animation: none; }
+}
+
+/* ---------- Mobile: the rail becomes a slide-in drawer with labels ---------- */
+@media (max-width: 860px) {
+  .rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(82vw, 280px);
+    min-width: 0;
+    height: 100vh;
+    align-items: stretch;
+    padding: 18px 16px;
+    transform: translateX(-100%);
+    transition: transform .25s ease-in-out;
+    z-index: 1100;
+    background: var(--surface);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, .35);
+  }
+  .rail.mobile-open { transform: translateX(0); }
+  .rail-brand { position: absolute; }
+  .rail-brand-copy { display: flex; flex-direction: column; justify-content: center; min-height: 52px; padding-left: 64px; }
+  .rail-brand-copy strong { font: 700 15px var(--sans); color: var(--text-primary); }
+  .rail-brand-copy small { font: 500 11px var(--sans); color: var(--brand-gold); margin-top: 3px; }
+  .rail-menu { margin-top: 24px; }
+  .rail-nav { align-items: stretch; margin-top: 20px; gap: 8px; }
+  .rail-item { width: 100%; display: flex; align-items: center; gap: 12px; justify-content: flex-start; }
+  .rail-item-label { display: block; font: 600 13.5px var(--sans); color: var(--text-primary); text-align: left; }
+  .rail-item.is-current::before { display: none; }
+  .rail-item[data-tooltip]:hover::after,
+  .rail-menu[data-tooltip]:hover::after { display: none; }
+}

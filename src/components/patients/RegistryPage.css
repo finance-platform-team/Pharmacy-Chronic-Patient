@@ -1,0 +1,279 @@
+/* Chronic App (Registry) — visual polish pass only: spacing, shadows,
+   radii, borders, hover/interaction smoothing. No new fonts or colors —
+   everything here reuses the existing design tokens from tokens.css /
+   PatientsPage.css and only adjusts spacing, motion, and elevation. */
+
+.registry-page.app-shell {
+  gap: 18px;
+}
+
+/* ---- Header ---- */
+.registry-page .page-header {
+  transition: box-shadow .2s ease;
+}
+.registry-page .page-title-grp {
+  gap: 14px;
+}
+.registry-page .cis-page {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  border-radius: var(--r-md);
+  transition: transform .2s ease;
+}
+.registry-page .page-header:hover .cis-page {
+  transform: scale(1.05);
+}
+
+/* ---- Filters + primary action ---- */
+.registry-page .filters-panel {
+  transition: box-shadow .2s ease;
+}
+.registry-page .filters-panel:hover {
+  box-shadow: var(--shadow-md);
+}
+.registry-page .filter-input,
+.registry-page .filter-select {
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.registry-page .btn-primary.btn-lg {
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.registry-page .btn-primary.btn-lg:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold);
+}
+.registry-page .btn-primary.btn-lg:active {
+  transform: translateY(0);
+}
+
+/* ---- Grid card ---- */
+.registry-page .bento.flush {
+  box-shadow: var(--shadow-md);
+}
+
+.registry-page .patients-grid thead th {
+  padding: 13px 16px;
+  font-size: 11px;
+}
+.registry-page .patients-grid td {
+  padding: 14px 16px;
+}
+.registry-page .patients-grid tbody tr {
+  transition: background .18s cubic-bezier(.22, 1, .36, 1), box-shadow .15s ease;
+  animation: registry-row-in .24s cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.registry-page .patients-grid tbody tr:nth-child(1) { animation-delay: 0ms; }
+.registry-page .patients-grid tbody tr:nth-child(2) { animation-delay: 40ms; }
+.registry-page .patients-grid tbody tr:nth-child(3) { animation-delay: 80ms; }
+.registry-page .patients-grid tbody tr:nth-child(4) { animation-delay: 120ms; }
+.registry-page .patients-grid tbody tr:nth-child(5) { animation-delay: 160ms; }
+@keyframes registry-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.registry-page .patients-grid tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+/* Selected rows get a clear left accent so an active bulk selection is easy
+   to spot at a glance, on top of the existing selected-row tint. */
+.registry-page .patients-grid tbody tr.row-selected {
+  box-shadow: inset 3px 0 0 var(--brand-gold);
+}
+
+.registry-page .row-select-checkbox {
+  transition: transform .12s ease;
+}
+.registry-page .row-select-checkbox:hover {
+  transform: scale(1.08);
+}
+
+.registry-page .lookup-input {
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+/* ---- Bulk toolbar ---- */
+.registry-page .bulk-toolbar {
+  animation: registry-bulk-in .16s ease-out;
+}
+@keyframes registry-bulk-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Pagination footer ---- */
+.registry-page .pagination-bar {
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+@media (max-width: 960px) {
+  .registry-page .grid-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .registry-page.app-shell {
+    padding: 14px;
+  }
+}
+
+/* ---- Header search icon ---- */
+.registry-page .filter-input-wrap {
+  position: relative;
+}
+.registry-page .filter-input-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dim);
+  font-size: 12px;
+  pointer-events: none;
+}
+.registry-page .filter-input.has-icon {
+  padding-left: 32px;
+}
+
+/* ---- Filters: one compact, wrapping row — Pharmacy / Business Unit inputs,
+   then pill buttons (Created On calendar, Assignment, Prescriptions) and a
+   Reset link that only shows while something is filtered. ---- */
+.registry-page .registry-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.registry-page .registry-filter-field {
+  width: 200px;
+  max-width: 100%;
+}
+.registry-page .registry-filter-field .lookup-input {
+  min-height: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  padding-left: 14px;
+  font-size: 12px;
+}
+/* Prescriptions — a single toggle button; brand tint for "with", warm amber
+   for "without" so the two states are easy to tell apart at a glance. */
+.registry-page .registry-rx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid;
+  font: 700 12px var(--sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.registry-page .registry-rx-toggle svg { font-size: 12px; }
+.registry-page .registry-rx-toggle .registry-rx-swap { font-size: 10px; opacity: .6; margin-left: 2px; }
+.registry-page .registry-rx-toggle.is-with {
+  background: var(--gold-soft);
+  border-color: var(--brand-gold);
+  color: var(--gold-dark);
+}
+.registry-page .registry-rx-toggle.is-without {
+  background: var(--warn-soft);
+  border-color: var(--warning);
+  color: var(--text-primary);
+}
+.registry-page .registry-rx-toggle.is-without svg:first-child { color: var(--warning); }
+.registry-page .registry-rx-toggle:hover { box-shadow: var(--shadow-sm); }
+.registry-page .registry-rx-toggle:active { transform: scale(.98); }
+.registry-page .registry-rx-toggle:focus-visible {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .registry-page .registry-filter-field { width: 100%; }
+}
+
+/* ---- Filter group label icons ---- */
+.registry-page .filter-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.registry-page .filter-group-label i {
+  color: var(--dim);
+  font-size: 10px;
+}
+
+/* ---- Records count badge — replaces the old column-chooser toggle in this
+   same toolbar slot; shows the total loaded patient count. ---- */
+.registry-page .records-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font: 700 12px var(--sans);
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+.registry-page .records-count svg { font-size: 11px; }
+
+/* ---- Patient cell — same gold-tinted rounded-square avatar + name pattern
+   used for "Patient" on Due Refill Queue / Preparation Queue. ---- */
+.registry-page .patient-cell { display: flex; align-items: center; gap: 10px; }
+.registry-page .avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 10.5px var(--sans);
+  flex-shrink: 0;
+}
+.registry-page .cell-link {
+  font-weight: 700;
+  color: var(--gold-dark);
+}
+.registry-page tbody tr:hover .cell-link {
+  text-decoration: underline;
+}
+
+/* ---- Prescriptions count badge ---- */
+.registry-page .count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text-body);
+  font: 700 11px var(--mono);
+}
+
+/* ---- Business Unit badge — same neutral tag used on Due Refill Queue /
+   Preparation Queue's "BU" column. ---- */
+.registry-page .bu-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 11px var(--sans);
+  color: var(--text-body);
+  background: var(--neutral-200);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 9px;
+  white-space: nowrap;
+}

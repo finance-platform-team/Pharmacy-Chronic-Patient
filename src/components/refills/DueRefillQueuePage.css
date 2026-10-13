@@ -1,0 +1,711 @@
+/* Due Refill Queue ("Cycle Eligibility & Availability") — matches ref.html
+   exactly, which (as of this pass) is the literal design spec for THIS page:
+   stat row with icon chips, filter bar with icon labels + a quick-filter
+   segmented row, a track-bar table with static-looking eligibility/
+   availability badges, and a two-part table-foot. Real, page-specific
+   functionality ref.html doesn't model (My Work toggle, editable status
+   pills, date-range filter chips, Send-to-Omni simulation) stays as-is.
+   Everything is scoped under .due-refill-page so it can't leak into or
+   collide with the identically-named unscoped rules in
+   PreparationQueuePage.css once both stylesheets are bundled together. */
+
+.due-refill-page.app-shell {
+  gap: 16px;
+  padding: 18px 24px 24px;
+}
+
+/* ---- Header ---- */
+.due-refill-page .page-header {
+  padding: 14px 22px;
+}
+.due-refill-page .page-header-row {
+  gap: 20px;
+}
+.due-refill-page .page-title-grp {
+  gap: 12px;
+}
+.due-refill-page .cis-page {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  border-radius: var(--r-md);
+}
+.due-refill-page .page-title {
+  font-size: 18px;
+  line-height: 1.2;
+}
+.due-refill-page .page-sub {
+  margin-top: 2px;
+  font-size: 11.5px;
+}
+.due-refill-page .toolbar-summary {
+  gap: 10px;
+}
+.due-refill-page .sync-note {
+  font: 500 11px var(--body);
+  color: var(--dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.due-refill-page .sync-note svg { font-size: 10px; }
+
+/* ---- KPI stat row (values copied verbatim from ref.html's .stat-row) ---- */
+.due-refill-page .stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 860px) {
+  .due-refill-page .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+.due-refill-page .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--grad-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s cubic-bezier(.22, 1, .36, 1), box-shadow .2s;
+}
+.due-refill-page .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.due-refill-page .stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.due-refill-page .sc-green::before { background: var(--grad-green); }
+.due-refill-page .sc-gold::before { background: var(--grad-gold); }
+.due-refill-page .sc-alert::before { background: var(--danger); }
+.due-refill-page .sc-dim::before { background: var(--neutral-400); }
+.due-refill-page .stat-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.due-refill-page .stat-ic.green { background: var(--green-soft); color: var(--green-dark); }
+.due-refill-page .stat-ic.gold { background: var(--gold-soft); color: var(--gold-dark); }
+.due-refill-page .stat-ic.alert { background: var(--danger-soft); color: var(--danger); }
+.due-refill-page .stat-ic.dim { background: var(--neutral-200); color: var(--muted); }
+.due-refill-page .stat-lbl {
+  font: 700 9px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+.due-refill-page .stat-val {
+  font: 800 22px var(--mono);
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+/* Featured tile — the one number on the page that needs action, on the deep
+   Synapse green surface (design-system reference card). */
+.due-refill-page .stat-card.is-featured {
+  border-color: transparent;
+  background: var(--grad-feature);
+  box-shadow: var(--shadow-feature);
+}
+.due-refill-page .stat-card.is-featured::before { display: none; }
+.due-refill-page .stat-card.is-featured .stat-lbl { color: rgba(255, 255, 255, .78); }
+.due-refill-page .stat-card.is-featured .stat-val { color: #fff; }
+.due-refill-page .stat-card.is-featured .stat-ic {
+  background: rgba(255, 255, 255, .14);
+  color: var(--synapse-mint);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+
+/* ---- Filters ---- */
+.refill-filters-panel {
+  background: var(--grad-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* One compact, wrapping row: search, Cycle Due calendar pill, Availability
+   buttons, and Reset (only while filtered). */
+.refill-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.due-refill-page .refill-search { width: 210px; max-width: 100%; }
+.due-refill-page .refill-search .filter-input {
+  min-width: 0;
+  min-height: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+}
+@media (max-width: 720px) {
+  .due-refill-page .refill-search { width: 100%; }
+}
+
+.refill-filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.due-refill-page .filter-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.due-refill-page .filter-group-label svg { font-size: 9px; color: var(--dim); }
+
+.due-refill-page .select-wrap { position: relative; }
+.due-refill-page .select-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 28px;
+  cursor: pointer;
+}
+.due-refill-page .sel-arrow {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dim);
+  font-size: 10px;
+  pointer-events: none;
+}
+.due-refill-page .search-wrap { position: relative; }
+.due-refill-page .search-wrap .filter-input { padding-left: 32px; }
+.due-refill-page .search-wrap svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.refill-active-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.refill-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  border: 1px solid var(--border);
+  font: 600 11.5px var(--sans);
+  color: var(--gold-dark);
+}
+.refill-filter-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(18, 110, 92, .16);
+  color: var(--gold-dark);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.refill-filter-chip button:hover { background: rgba(18, 110, 92, .26); }
+.refill-clear-filters {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: 500 11.5px var(--sans);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.refill-clear-filters:hover { color: var(--text-primary); }
+
+/* ---- Table shell ---- */
+.due-refill-page .table-scroll { flex: 1; overflow: auto; position: relative; }
+.due-refill-page table.refill-grid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1420px;
+}
+.due-refill-page .refill-grid thead th {
+  text-align: left;
+  font: 700 11px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--table-head-text);
+  padding: 13px 16px;
+  background: var(--table-head);
+  border-bottom: 1px solid rgba(18, 110, 92, .16);
+  white-space: nowrap;
+}
+.due-refill-page .refill-grid tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .18s cubic-bezier(.22, 1, .36, 1);
+  animation: refill-row-in .24s cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.due-refill-page .refill-grid tbody tr:nth-child(1) { animation-delay: 0ms; }
+.due-refill-page .refill-grid tbody tr:nth-child(2) { animation-delay: 40ms; }
+.due-refill-page .refill-grid tbody tr:nth-child(3) { animation-delay: 80ms; }
+.due-refill-page .refill-grid tbody tr:nth-child(4) { animation-delay: 120ms; }
+.due-refill-page .refill-grid tbody tr:nth-child(5) { animation-delay: 160ms; }
+@keyframes refill-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.due-refill-page .refill-grid tbody tr:last-child { border-bottom: none; }
+.due-refill-page .refill-grid tbody tr:hover { background: var(--surface-hover); }
+.due-refill-page .refill-grid tbody tr.is-sent { opacity: .82; }
+.due-refill-page .refill-grid td {
+  padding: 14px 16px;
+  font: 400 13px var(--body);
+  vertical-align: middle;
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+/* Sortable column headers — same shared control used on Patients/Prep Queue,
+   just re-declared here scoped to .refill-grid (base .th-sortable-inner /
+   .sort-arrow rules are already global via PatientsPage.css). */
+.due-refill-page .refill-grid thead th.th-sortable { cursor: pointer; user-select: none; }
+.due-refill-page .refill-grid thead th.th-sortable:hover { color: var(--gold-dark); background: var(--brand-gold-100); }
+.due-refill-page .refill-grid thead th.th-sortable:hover .sort-arrow { opacity: 1; }
+
+/* ---- Expand All / Collapse All toolbar ---- */
+.due-refill-page .table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Per-row expand/collapse arrow — distinct control from column
+   sorting above; only toggles the Products subrow for that record. ---- */
+.due-refill-page .expand-cell { width: 34px; padding: 0 0 0 10px !important; }
+.due-refill-page .expand-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease;
+}
+.due-refill-page .expand-toggle svg {
+  font-size: 11px;
+  transition: transform .18s cubic-bezier(.22, 1, .36, 1);
+}
+.due-refill-page .expand-toggle:hover { color: var(--gold-dark); background: var(--gold-soft); }
+.due-refill-page .expand-toggle.expanded { color: var(--gold-dark); }
+.due-refill-page .expand-toggle.expanded svg { transform: rotate(90deg); }
+
+/* ---- Products subrow — expanded card underneath a Prescription row ---- */
+.due-refill-page .refill-grid tr.product-subrow { animation: none; }
+.due-refill-page .refill-grid tr.product-subrow:hover { background: transparent; }
+.due-refill-page .refill-grid td.product-subrow-cell {
+  padding: 0 16px 16px 44px;
+  white-space: normal;
+  background: var(--canvas);
+  animation: refill-subrow-in .2s cubic-bezier(.22, 1, .36, 1);
+}
+@keyframes refill-subrow-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Product card — reproduced from ref.html's Preparation Queue products
+   subgrid mockup, reused here for the expanded Prescription row. ---- */
+.due-refill-page .prod-card {
+  background: var(--grad-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.due-refill-page .prod-card-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #fff 0%, var(--brand-gold-100) 100%);
+}
+.due-refill-page .prod-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 11.5px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  color: var(--gold-dark);
+}
+.due-refill-page .prod-eyebrow .cis {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.due-refill-page .prod-eyebrow .cis svg { font-size: 10px; color: var(--gold-dark); }
+.due-refill-page .prod-margin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font: 600 11.5px var(--sans);
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+}
+.due-refill-page .prod-margin-chip svg { font-size: 9px; }
+.due-refill-page .prod-margin-chip strong { font-family: var(--mono); font-weight: 700; }
+
+.due-refill-page .prod-state {
+  padding: 16px 18px;
+  font: 500 12px var(--sans);
+  color: var(--muted);
+}
+.due-refill-page .prod-state-error { color: var(--danger); display: flex; align-items: center; gap: 10px; }
+.due-refill-page .prod-retry {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-body);
+  font: 600 11px var(--sans);
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.due-refill-page .prod-retry:hover { border-color: var(--border-hover); background: var(--surface-hover); }
+
+.due-refill-page .prod-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.due-refill-page .prod-table thead th {
+  background: var(--table-head);
+  padding: 10px 16px;
+  font: 700 10.5px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--table-head-text);
+  text-align: left;
+  border-bottom: 1px solid rgba(18, 110, 92, .16);
+  white-space: nowrap;
+}
+.due-refill-page .prod-table thead th.num { text-align: right; }
+.due-refill-page .prod-table tbody td {
+  padding: 11px 16px;
+  font: 500 12.5px var(--body);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-body);
+  white-space: nowrap;
+}
+.due-refill-page .prod-table tbody tr:last-child td { border-bottom: none; }
+.due-refill-page .prod-table tbody tr { transition: background .15s; }
+.due-refill-page .prod-table tbody tr:hover { background: var(--gold-soft); }
+.due-refill-page .prod-table td.num { text-align: right; font-family: var(--mono); }
+.due-refill-page .prod-cell { display: flex; align-items: center; gap: 9px; }
+.due-refill-page .prod-ic {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.due-refill-page .prod-name { font-weight: 600; color: var(--text-primary); }
+.due-refill-page .mono-muted { color: var(--dim); font-size: 11.5px; }
+.due-refill-page .qty-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-200);
+  color: var(--text-body);
+  font: 700 11.5px var(--mono);
+}
+.due-refill-page .margin-val { color: var(--green-dark); font-weight: 700; }
+
+.due-refill-page .prod-table tfoot .prod-total-row td {
+  padding: 5px 16px;
+  font: 700 11.5px var(--sans);
+  color: var(--text-primary);
+  background: var(--gold-soft);
+  border-top: 1px solid var(--brand-gold);
+  border-bottom: none;
+}
+.due-refill-page .prod-table tfoot .prod-total-row td.num { font-family: var(--mono); color: var(--gold-dark); }
+.due-refill-page .prod-table tfoot .prod-total-row td:last-child { color: var(--green-dark); }
+
+/* Left-edge status indicator — a real table cell/column, not a box-shadow. */
+.due-refill-page .track-bar-cell { width: 3px; padding: 0 !important; }
+.due-refill-page .track-bar { width: 3px; height: 100%; min-height: 54px; }
+.due-refill-page .tb-green { background: var(--grad-green); }
+.due-refill-page .tb-gold { background: var(--grad-gold); }
+.due-refill-page .tb-dim { background: var(--neutral-300); }
+
+/* Cycle ID / Cycle Due */
+.due-refill-page .mono-id { font: 600 12px var(--mono); color: var(--text-body); letter-spacing: -.3px; }
+.due-refill-page .mono-date { font: 500 12px var(--mono); color: var(--text-body); }
+
+/* ---- Patient cell — fixed gold-tinted rounded-square avatar ---- */
+.due-refill-page .patient-cell { display: flex; align-items: center; gap: 10px; }
+.due-refill-page .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 11px var(--sans);
+  flex-shrink: 0;
+}
+.due-refill-page .patient-name { font: 600 13px var(--sans); color: var(--text-primary); white-space: nowrap; }
+
+/* ---- BU tag ---- */
+.due-refill-page .bu-tag {
+  display: inline-flex;
+  align-items: center;
+  font: 600 11px var(--sans);
+  color: var(--text-body);
+  background: var(--neutral-200);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+/* ---- Eligibility / Availability editable status pills (restored — this is
+   the pre-existing clickable pill + dropdown, not a ref.html badge). ---- */
+.due-refill-page .status-cell-button {
+  min-height: 38px;
+  border-radius: var(--r-pill);
+  padding: 8px 14px 8px 12px;
+  border: 1px solid rgba(0, 0, 0, .06);
+}
+.due-refill-page .status-cell-button:hover,
+.due-refill-page .status-cell-button:focus-visible {
+  border-color: rgba(0, 0, 0, .12);
+}
+.due-refill-page .status-cell-label {
+  font-weight: 600;
+}
+.due-refill-page .status-chevron {
+  font-size: 11px;
+  color: var(--dim);
+}
+.due-refill-page .status-cell-button.status-cell-locked {
+  cursor: default;
+  opacity: .75;
+}
+.due-refill-page .status-cell-button.status-cell-locked:hover,
+.due-refill-page .status-cell-button.status-cell-locked:focus-visible {
+  border-color: rgba(0, 0, 0, .06);
+}
+/* Status cells / options take their colour from the --tone-* tokens via
+   the pill class (pill-success / -danger / -muted / -neutral), so they stay
+   in step with every other status in the app and with dark mode. */
+.due-refill-page .status-cell-button.pill-success { --tone: var(--tone-success); background: var(--tone-success-soft); }
+.due-refill-page .status-cell-button.pill-danger { --tone: var(--tone-danger); background: var(--tone-danger-soft); }
+.due-refill-page .status-cell-button.pill-muted { --tone: var(--tone-neutral); background: var(--tone-neutral-soft); }
+.due-refill-page .status-cell-button.pill-neutral { --tone: var(--tone-ai); background: var(--tone-ai-soft); }
+.due-refill-page .status-cell-button[class*='pill-'] { border-color: color-mix(in srgb, var(--tone) 24%, transparent); }
+.due-refill-page .status-cell-button[class*='pill-']:hover,
+.due-refill-page .status-cell-button[class*='pill-']:focus-visible {
+  border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 10%, transparent);
+}
+.due-refill-page .status-cell-button.status-cell-locked:hover,
+.due-refill-page .status-cell-button.status-cell-locked:focus-visible {
+  border-color: color-mix(in srgb, var(--tone) 24%, transparent);
+  box-shadow: none;
+}
+
+.due-refill-page .status-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.due-refill-page .status-option.pill-success { --tone: var(--tone-success); }
+.due-refill-page .status-option.pill-danger { --tone: var(--tone-danger); }
+.due-refill-page .status-option.pill-muted { --tone: var(--tone-neutral); }
+.due-refill-page .status-option.pill-neutral { --tone: var(--tone-ai); }
+.due-refill-page .status-option[class*='pill-'] { color: var(--tone); background: transparent; }
+.due-refill-page .status-option[class*='pill-']:hover,
+.due-refill-page .status-option[class*='pill-']:focus { background: color-mix(in srgb, var(--tone) 10%, transparent); }
+/* ---- Action column ---- */
+.due-refill-page .actions-cell { white-space: nowrap; }
+/* Fixed width + stretch so the Send button and both pill states (Sent /
+   Not Eligible) always render at the same length, regardless of their text. */
+.due-refill-page .action-cell-inner { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 190px; margin-left: auto; }
+.due-refill-page .action-cell-inner .btn { width: 100%; justify-content: center; }
+.due-refill-page .action-cell-inner .meta-line { text-align: center; }
+
+.due-refill-page .state-pill { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 7px 13px; border-radius: var(--r-pill); font: 700 11.5px var(--sans); letter-spacing: .2px; white-space: nowrap; box-sizing: border-box; }
+.due-refill-page .state-pill svg { font-size: 10px; }
+
+.due-refill-page .pill-sent { background: var(--green-soft); color: var(--green-dark); }
+.due-refill-page .pill-sent .pill-ic { width: 16px; height: 16px; border-radius: 50%; background: var(--green-dark); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; flex-shrink: 0; }
+.due-refill-page .meta-line { font: 500 10px var(--mono); color: var(--dim); padding-right: 3px; }
+
+.due-refill-page .pill-blocked { background: var(--neutral-200); color: var(--muted); border: 1px solid var(--border); cursor: help; }
+.due-refill-page .pill-blocked svg { color: var(--dim); }
+
+.due-refill-page .btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .45);
+  border-top-color: #fff;
+  animation: due-refill-spin .7s linear infinite;
+}
+@keyframes due-refill-spin {
+  to { transform: rotate(360deg); }
+}
+
+.due-refill-page .refill-empty-row {
+  padding: 40px 20px !important;
+  text-align: center;
+  color: var(--muted);
+  font: 500 12px var(--sans);
+  white-space: normal !important;
+}
+
+/* ---- Table footer ---- */
+.due-refill-page .table-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-hover);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.due-refill-page .foot-count { font: 500 11px var(--body); color: var(--dim); }
+.due-refill-page .foot-count strong { color: var(--text-body); }
+
+/* ---- Toast ---- */
+.due-refill-page .toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  font: 600 12.5px var(--sans);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  animation: due-refill-toast-in .25s cubic-bezier(.22, 1, .36, 1);
+}
+.due-refill-page .toast-success {
+  border-left: 4px solid var(--success);
+}
+.due-refill-page .toast-error {
+  border-left: 4px solid var(--danger);
+}
+.due-refill-page .toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  flex-shrink: 0;
+  color: #fff;
+}
+.due-refill-page .toast-success .toast-icon {
+  background: var(--success);
+}
+.due-refill-page .toast-error .toast-icon {
+  background: var(--danger);
+}
+@keyframes due-refill-toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1280px) {
+  .due-refill-page .refill-grid thead th {
+    padding: 11px 10px;
+    font-size: 9.5px;
+  }
+  .due-refill-page .refill-grid td {
+    padding: 12px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .refill-filters-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 960px) {
+  .due-refill-page.app-shell {
+    padding: 14px;
+  }
+  .due-refill-page .toast {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+}
+
+@media (max-width: 620px) {
+  .refill-filters-row { grid-template-columns: 1fr; }
+  .due-refill-page table.refill-grid, .due-refill-page thead, .due-refill-page tbody,
+  .due-refill-page th, .due-refill-page td, .due-refill-page tr { display: block; }
+  .due-refill-page thead { display: none; }
+  .due-refill-page .track-bar-cell { display: none; }
+  .due-refill-page .refill-grid tbody tr { padding: 14px 16px; border-bottom: 8px solid var(--canvas); animation: none; }
+  .due-refill-page .refill-grid td { padding: 7px 0; border: none; }
+  .due-refill-page .expand-cell { padding: 0 0 6px !important; }
+  .due-refill-page td.product-subrow-cell { padding: 0 0 14px; }
+  .due-refill-page .table-toolbar { flex-wrap: wrap; }
+}
+
+/* Money column in the main grid (Dispensed Value). */
+.due-refill-page .refill-grid td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }

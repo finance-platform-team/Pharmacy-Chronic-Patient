@@ -1,0 +1,49 @@
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-body);
+  font: 600 12px var(--sans);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.refresh-btn:hover:not(:disabled) {
+  border-color: var(--brand-gold);
+  color: var(--gold-dark);
+  background: var(--brand-gold-100);
+}
+.refresh-btn:disabled {
+  cursor: progress;
+  opacity: .85;
+}
+
+.refresh-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+}
+.refresh-icon.spin {
+  animation: refresh-btn-spin .8s linear infinite;
+}
+@keyframes refresh-btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.refresh-btn-done {
+  border-color: color-mix(in srgb, var(--tone-success) 35%, transparent);
+  color: var(--tone-success);
+  background: var(--tone-success-soft);
+}
+.refresh-btn-error {
+  border-color: color-mix(in srgb, var(--tone-danger) 35%, transparent);
+  color: var(--tone-danger);
+  background: var(--tone-danger-soft);
+}

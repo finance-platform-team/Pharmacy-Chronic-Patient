@@ -1,0 +1,139 @@
+/* Synapse global header (glass strip above the page content). */
+.topbar {
+  flex: none;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 22px 12px 20px;
+  border-bottom: 1px solid rgba(37, 80, 71, .08);
+  background-color: rgba(255, 255, 255, .34);
+  background-image: linear-gradient(110deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .055));
+  box-shadow: 0 8px 24px rgba(42, 74, 67, .05), inset 0 1px 0 rgba(255, 255, 255, .58);
+  backdrop-filter: blur(18px) saturate(108%);
+  position: relative;
+  z-index: 10;
+}
+
+.topbar-menu {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .74);
+  background: rgba(255, 255, 255, .64);
+  color: var(--text-primary);
+}
+
+.topbar-page-context { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+.topbar-page-context h1 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font: 700 clamp(19px, 1.65vw, 24px)/1.05 var(--sans);
+  letter-spacing: -.45px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: #7B8A85;
+  font: 500 11px/1 var(--sans);
+  white-space: nowrap;
+}
+.topbar-breadcrumb svg { width: 8px; height: 8px; color: #9EAAA6; }
+.topbar-breadcrumb span[aria-current="page"] { color: #37675D; font-weight: 600; }
+
+.topbar-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+
+/* Region: a small segmented pill matching the theme switch. */
+.topbar-region {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, .75);
+  border-radius: 23px;
+  background: rgba(255, 255, 255, .66);
+  box-shadow: 0 6px 15px rgba(42, 74, 67, .06), inset 0 1px 0 rgba(255, 255, 255, .88);
+}
+.topbar-region button {
+  height: 32px;
+  min-width: 46px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 18px;
+  color: #5C6D69;
+  background: transparent;
+  font: 700 12px var(--sans);
+  letter-spacing: .3px;
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.topbar-region button:hover { color: var(--synapse-deep); }
+.topbar-region button.is-active {
+  color: #fff;
+  background: linear-gradient(145deg, #17836D, #126E5C);
+  box-shadow: 0 6px 14px rgba(18, 110, 92, .25);
+}
+
+/* Theme switch — sun / moon pill, same as the Synapse reference. */
+.theme-switch {
+  width: 72px;
+  height: 40px;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(255, 255, 255, .75);
+  border-radius: 23px;
+  color: #5C6D69;
+  background: rgba(255, 255, 255, .66);
+  box-shadow: 0 6px 15px rgba(42, 74, 67, .06), inset 0 1px 0 rgba(255, 255, 255, .88);
+}
+.theme-switch span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 14px;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.theme-switch .theme-active { color: var(--synapse-deep); background: #fff; box-shadow: 0 4px 11px rgba(2, 54, 53, .09); }
+
+/* ---------- Dark ---------- */
+:root[data-theme="dark"] .topbar {
+  border-bottom-color: rgba(64, 255, 184, .09);
+  background-color: rgba(15, 42, 37, .82);
+  background-image: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+}
+:root[data-theme="dark"] .topbar-breadcrumb { color: #809690; }
+:root[data-theme="dark"] .topbar-breadcrumb span[aria-current="page"] { color: #A7D7C8; }
+:root[data-theme="dark"] .topbar-region,
+:root[data-theme="dark"] .theme-switch,
+:root[data-theme="dark"] .topbar-menu {
+  border-color: rgba(215, 239, 233, .06);
+  color: #D8E8E3;
+  background: #19312C;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .15);
+}
+:root[data-theme="dark"] .topbar-region button { color: #A9BDB7; }
+:root[data-theme="dark"] .topbar-region button:hover { color: #EEF8F5; }
+:root[data-theme="dark"] .topbar-region button.is-active { color: #EFFCF8; background: #1B5B4D; }
+:root[data-theme="dark"] .theme-switch .theme-active { color: #0B2924; background: #DCEBE7; box-shadow: 0 4px 11px rgba(0, 0, 0, .2); }
+
+@media (max-width: 860px) {
+  .topbar { height: 64px; padding: 10px 12px; gap: 10px; }
+  .topbar-menu { display: grid; flex: none; }
+  .topbar-breadcrumb { display: none; }
+  .topbar-page-context h1 { font-size: 17px; }
+  .topbar-region button { min-width: 38px; padding: 0 8px; }
+}

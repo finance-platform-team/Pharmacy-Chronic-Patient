@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preparation Queue — Products Subgrid</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --brand-gold-600:   #2B160A;
+  --gold-dark:        #A5845B;
+  --brand-gold:       #A5845B;
+  --brand-gold-100:   #F9F3ED;
+
+  --green-dark:       #49604C;
+  --brand-green:      #49604C;
+
+  --ink:              #211C1E;
+  --neutral-500:      #707070;
+  --neutral-400:      #D9D9D9;
+  --neutral-300:      #EDEDED;
+  --neutral-200:      #F7F7F7;
+
+  --canvas:           #F7F4EE;
+  --surface:          #FFFFFF;
+  --surface-hover:    #FBF8F2;
+  --border:           #E8E0D3;
+  --border-hover:     #D8CBB4;
+
+  --text-primary:     #211C1E;
+  --text-body:        #514A44;
+  --muted:            #8A8079;
+  --dim:              #B3A99E;
+
+  --gold-soft:        rgba(165, 132,  91, 0.12);
+  --green-soft:       rgba( 73,  96,  76, 0.12);
+
+  --grad-gold:        linear-gradient(135deg, #A5845B 0%, #F0C893 100%);
+  --grad-card:        linear-gradient(180deg, #FFFFFF 0%, #F9F3ED 100%);
+
+  --sans: 'Outfit', -apple-system, sans-serif;
+  --body: 'Inter', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+
+  --r-sm:   8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-pill: 999px;
+
+  --shadow-sm: 0 1px  3px rgba(33, 28, 30, 0.06);
+  --shadow-md: 0 4px 12px rgba(33, 28, 30, 0.07);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  font-family: var(--body);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  padding: 28px;
+}
+.wrap { max-width: 900px; margin: 0 auto; }
+
+.context-note { display: flex; align-items: center; gap: 8px; font: 600 11.5px var(--sans); color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 7px 14px; width: fit-content; margin-bottom: 16px; }
+.context-note i { color: var(--gold-dark); font-size: 11px; }
+.context-note strong { color: var(--text-primary); }
+
+/* ── Product subgrid card ── */
+.prod-card { background: var(--grad-card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.prod-card-hdr { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #fff 0%, var(--brand-gold-100) 100%); }
+.prod-eyebrow { display: flex; align-items: center; gap: 8px; font: 700 12px var(--sans); text-transform: uppercase; letter-spacing: .8px; color: var(--gold-dark); }
+.prod-eyebrow .cis { width: 26px; height: 26px; border-radius: var(--r-sm); background: var(--gold-soft); display: flex; align-items: center; justify-content: center; }
+.prod-eyebrow .cis i { font-size: 11px; color: var(--gold-dark); }
+.prod-margin-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--green-soft); color: var(--green-dark); font: 600 11.5px var(--sans); padding: 6px 12px; border-radius: var(--r-pill); }
+.prod-margin-chip i { font-size: 10px; }
+.prod-margin-chip strong { font-family: var(--mono); font-weight: 700; }
+
+.table-scroll { overflow-x: auto; }
+.prod-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.prod-table thead th { background: var(--surface-hover); padding: 11px 18px; font: 700 9.5px var(--sans); text-transform: uppercase; letter-spacing: .7px; color: var(--dim); text-align: left; cursor: default; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.prod-table thead th.num { text-align: right; }
+.prod-table tbody td { padding: 13px 18px; font: 500 13px var(--body); border-bottom: 1px solid var(--border); color: var(--text-body); white-space: nowrap; }
+.prod-table tbody tr:last-child td { border-bottom: none; }
+.prod-table tbody tr { transition: background .15s; }
+.prod-table tbody tr:hover { background: var(--gold-soft); }
+.prod-table td.num { text-align: right; font-family: var(--mono); }
+.prod-cell { display: flex; align-items: center; gap: 10px; }
+.prod-ic { width: 28px; height: 28px; border-radius: var(--r-sm); background: var(--gold-soft); color: var(--gold-dark); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.prod-name { font-weight: 600; color: var(--text-primary); }
+.mono-muted { color: var(--dim); font-size: 12px; }
+.qty-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; padding: 3px 9px; border-radius: var(--r-pill); background: var(--neutral-200); color: var(--text-body); font: 700 12px var(--mono); }
+.margin-val { color: var(--green-dark); font-weight: 700; }
+
+.prod-table tfoot .prod-total-row td { padding: 13px 18px; font: 700 13px var(--sans); color: var(--text-primary); background: var(--gold-soft); border-top: 2px solid var(--brand-gold); }
+.prod-table tfoot .prod-total-row td.num { font-family: var(--mono); color: var(--gold-dark); }
+.prod-table tfoot .prod-total-row td:last-child { color: var(--green-dark); }
+
+@media (max-width: 620px) {
+  body { padding: 16px; }
+  .prod-card-hdr { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="context-note">
+    <i class="fa-solid fa-diagram-project"></i>
+    Subgrid — model-driven form, view: <strong>Preparation Queue</strong>
+  </div>
+
+  <div class="prod-card">
+    <div class="prod-card-hdr">
+      <div class="prod-eyebrow">
+        <span class="cis"><i class="fa-solid fa-boxes-stacked"></i></span>
+        Products (2)
+      </div>
+      <div class="prod-margin-chip"><i class="fa-solid fa-arrow-trend-up"></i>Margin&nbsp;<strong>195.98</strong></div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="prod-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="num">Item ID</th>
+            <th class="num">Quantity</th>
+            <th class="num">Sales Price</th>
+            <th class="num">Cost Price</th>
+            <th class="num">Margin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="prod-cell">
+                <span class="prod-ic"><i class="fa-solid fa-capsules"></i></span>
+                <span class="prod-name">EXFORGE HCT 10/160/25MG 14 TAB</span>
+              </div>
+            </td>
+            <td class="num mono-muted">14827</td>
+            <td class="num"><span class="qty-badge">6</span></td>
+            <td class="num">1,026.00</td>
+            <td class="num">880.40</td>
+            <td class="num margin-val">+145.60</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="prod-cell">
+                <span class="prod-ic"><i class="fa-solid fa-capsules"></i></span>
+                <span class="prod-name">NEVLOB 5MG 21 TAB</span>
+              </div>
+            </td>
+            <td class="num mono-muted">BRG1607</td>
+            <td class="num"><span class="qty-badge">6</span></td>
+            <td class="num">332.32</td>
+            <td class="num">195.98</td>
+            <td class="num margin-val">+136.34</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="prod-total-row">
+            <td colspan="3">Total</td>
+            <td class="num">1,358.32</td>
+            <td class="num">1,076.38</td>
+            <td class="num">+281.94</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

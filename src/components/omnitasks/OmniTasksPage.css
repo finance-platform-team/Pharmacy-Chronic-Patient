@@ -1,0 +1,381 @@
+/* Omni Tasks — Medical Contact Center task log. Same visual language as the
+   other pages (page-header, toolbar with search/select, bento.flush table,
+   table-foot count) reproduced locally here since this page doesn't share a
+   CSS file with any of them; only the truly global classes from
+   PatientsPage.css (.btn, .pill*, .filter-select, .bento.flush, .mono) are
+   reused as-is. */
+
+.omni-tasks-page.app-shell {
+  gap: 16px;
+  padding: 18px 24px 24px;
+}
+
+.omni-tasks-page .page-header {
+  padding: 14px 22px;
+}
+.omni-tasks-page .cis-page {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  border-radius: var(--r-md);
+}
+.omni-tasks-page .page-title {
+  font-size: 18px;
+  line-height: 1.2;
+}
+.omni-tasks-page .page-sub {
+  margin-top: 2px;
+  font-size: 11.5px;
+}
+
+/* ---- Filter bar: search, BU, Status buttons (with counts) — one compact
+   row inside a card, same language as the Registry / Due Refill bars. ---- */
+.omni-tasks-page .omni-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.omni-tasks-page .omni-bu-field { width: 200px; max-width: 100%; }
+.omni-tasks-page .omni-bu-field .lookup-input {
+  min-height: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  border-color: var(--neutral-400);
+  padding-left: 14px;
+  font-size: 12px;
+}
+.omni-tasks-page .omni-search-box {
+  width: 280px;
+  max-width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--neutral-400);
+  border-radius: var(--r-pill);
+  padding: 0 14px;
+  transition: border-color .2s, box-shadow .2s;
+}
+@media (max-width: 720px) {
+  .omni-tasks-page .omni-search-box,
+  .omni-tasks-page .omni-bu-field { width: 100%; }
+}
+.omni-tasks-page .omni-search-box:focus-within {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 3px rgba(18, 110, 92, .12);
+}
+.omni-tasks-page .omni-search-box svg { font-size: 12px; color: var(--dim); flex-shrink: 0; }
+.omni-tasks-page .omni-search-box input {
+  border: none;
+  outline: none;
+  font: 500 12px var(--sans);
+  width: 100%;
+  background: transparent;
+  color: var(--text-primary);
+}
+.omni-tasks-page .omni-search-box input::placeholder { color: var(--dim); }
+
+/* ---- Table ---- */
+.omni-tasks-page .table-scroll { flex: 1; overflow: auto; position: relative; }
+.omni-tasks-page table.omni-tasks-grid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+.omni-tasks-page .omni-tasks-grid thead th {
+  text-align: left;
+  font: 700 11px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--table-head-text);
+  padding: 13px 16px;
+  background: var(--table-head);
+  border-bottom: 1px solid rgba(18, 110, 92, .16);
+  white-space: nowrap;
+}
+.omni-tasks-page .omni-tasks-grid thead th.th-sortable { cursor: pointer; user-select: none; }
+.omni-tasks-page .omni-tasks-grid thead th.th-sortable:hover { color: var(--gold-dark); background: var(--brand-gold-100); }
+.omni-tasks-page .omni-tasks-grid thead th.th-sortable:hover .sort-arrow { opacity: 1; }
+.omni-tasks-page .omni-tasks-grid tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .15s ease;
+}
+/* Whole row opens the disposition panel. */
+.omni-tasks-page .omni-tasks-grid tbody tr.omni-row { cursor: pointer; }
+.omni-tasks-page .omni-tasks-grid tbody tr.omni-row:hover .omni-open-btn {
+  background: var(--gold-soft);
+  border-color: var(--brand-gold);
+  color: var(--gold-dark);
+}
+.omni-tasks-page .omni-tasks-grid tbody tr:last-child { border-bottom: none; }
+.omni-tasks-page .omni-tasks-grid tbody tr:hover { background: var(--surface-hover); }
+.omni-tasks-page .omni-tasks-grid tbody tr.row-selected { background: rgba(18, 110, 92, 0.08); }
+.omni-tasks-page .omni-tasks-grid tbody tr.row-selected:hover { background: rgba(18, 110, 92, 0.12); }
+.omni-tasks-page .omni-tasks-grid td {
+  padding: 12px 16px;
+  font: 500 13px var(--sans);
+  vertical-align: middle;
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+.omni-tasks-page .mono-id { font: 600 12px var(--mono); color: var(--text-body); letter-spacing: -.3px; }
+.omni-tasks-page .omni-dim { color: var(--dim); }
+.omni-tasks-page .omni-unassigned { font-style: italic; font-size: 12px; }
+.omni-tasks-page .omni-date { font-size: 12.5px; color: var(--text-body); }
+
+/* Patient: avatar + name, mobile underneath — replaces two mostly-empty columns. */
+.omni-tasks-page .omni-patient { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.omni-tasks-page .omni-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 11px var(--sans);
+  flex-shrink: 0;
+}
+.omni-tasks-page .omni-avatar.is-empty { background: var(--neutral-200); color: var(--dim); border: 1px dashed var(--border); }
+.omni-tasks-page .omni-patient-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.omni-tasks-page .omni-patient-name { font: 700 13px var(--sans); color: var(--text-primary); }
+.omni-tasks-page .omni-patient-name.is-empty { color: var(--dim); font-weight: 600; font-style: italic; }
+.omni-tasks-page .omni-patient-mobile { font: 500 11.5px var(--mono); color: var(--dim); }
+
+/* Attempts: one pip per allowed attempt, filled for each one used. */
+.omni-tasks-page .omni-attempts { display: inline-flex; align-items: center; gap: 8px; }
+.omni-tasks-page .omni-pips { display: inline-flex; gap: 3px; }
+.omni-tasks-page .omni-pip {
+  width: 14px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--neutral-400);
+  opacity: .45;
+}
+.omni-tasks-page .omni-pip.is-used { background: var(--brand-gold); opacity: 1; }
+.omni-tasks-page .omni-attempts-text { font: 600 12px var(--mono); color: var(--text-body); }
+
+/* Status pill — same tone palette as the filter buttons (FilterControls.css). */
+.omni-tasks-page .omni-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font: 700 11.5px var(--sans);
+  background: var(--tone-soft);
+  color: var(--tone);
+  border: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
+  white-space: nowrap;
+}
+.omni-tasks-page .omni-status.tone-success { --tone: var(--tone-success); --tone-soft: var(--tone-success-soft); }
+.omni-tasks-page .omni-status.tone-info { --tone: var(--tone-info); --tone-soft: var(--tone-info-soft); }
+.omni-tasks-page .omni-status.tone-warning { --tone: var(--tone-warning); --tone-soft: var(--tone-warning-soft); }
+.omni-tasks-page .omni-status.tone-danger { --tone: var(--tone-danger); --tone-soft: var(--tone-danger-soft); }
+.omni-tasks-page .omni-status.tone-neutral { --tone: var(--tone-neutral); --tone-soft: var(--tone-neutral-soft); }
+.omni-tasks-page .omni-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tone); }
+
+/* Agent: small initials avatar + name. */
+.omni-tasks-page .omni-agent { display: inline-flex; align-items: center; gap: 8px; }
+.omni-tasks-page .omni-agent-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  color: var(--text-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 9.5px var(--sans);
+  flex-shrink: 0;
+}
+.omni-tasks-page .omni-agent-name { font: 600 12.5px var(--sans); color: var(--text-primary); }
+
+/* Open action — pinned to the right edge so it never scrolls out of view. */
+.omni-tasks-page .omni-col-action {
+  position: sticky;
+  right: 0;
+  width: 1%;
+  text-align: right;
+  background: var(--surface);
+  box-shadow: -8px 0 12px -10px rgba(0, 0, 0, .25);
+}
+.omni-tasks-page thead .omni-col-action { background: var(--table-head); }
+.omni-tasks-page .omni-tasks-grid tbody tr:hover .omni-col-action { background: var(--surface-hover); }
+.omni-tasks-page .omni-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--neutral-400);
+  background: var(--surface);
+  color: var(--text-body);
+  font: 600 12px var(--sans);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.omni-tasks-page .omni-open-btn svg { font-size: 9px; }
+.omni-tasks-page .bu-tag {
+  display: inline-flex;
+  align-items: center;
+  font: 600 11px var(--sans);
+  color: var(--text-body);
+  background: var(--neutral-200);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+.omni-tasks-page .omni-empty-row {
+  padding: 48px 20px !important;
+  text-align: center;
+  color: var(--muted);
+  font: 500 12.5px var(--sans);
+  white-space: normal !important;
+  cursor: default;
+}
+.omni-tasks-page .omni-empty-row svg { font-size: 22px; color: var(--dim); opacity: .5; margin-bottom: 10px; }
+
+.omni-tasks-page .table-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-hover);
+}
+.omni-tasks-page .foot-count { font: 500 11px var(--body); color: var(--dim); }
+
+/* ---- Disposition panel — matches the standalone reference mockup's section
+   headers/summary grid/editable-field styling, layered on top of the shared
+   .side-panel/.section-card shell so slide-in animation etc. stay unchanged. ---- */
+.omni-tasks-page .omni-panel-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--neutral-200);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  transition: background .2s ease, color .2s ease;
+}
+.omni-tasks-page .omni-panel-close:hover { background: var(--neutral-300); color: var(--text-primary); }
+
+.omni-tasks-page .omni-sec-hdr { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+.omni-tasks-page .omni-sec-hdr svg { font-size: 11px; color: var(--gold-dark); }
+.omni-tasks-page .omni-sec-title { font: 700 10.5px var(--sans); text-transform: uppercase; letter-spacing: .8px; color: var(--gold-dark); }
+
+/* Task Summary — read-only label-above-value grid */
+.omni-tasks-page .omni-sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.omni-tasks-page .omni-sum-item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.omni-tasks-page .omni-sum-lbl { font: 600 10.5px var(--body); color: var(--muted); }
+.omni-tasks-page .omni-sum-val { font: 700 13.5px var(--sans); color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; }
+.omni-tasks-page .omni-sum-val.mono { font-family: var(--mono); font-weight: 600; }
+.omni-tasks-page .omni-sum-val.dim { color: var(--dim); font-weight: 500; }
+
+/* Editable Fields — always-visible dropdowns grouped together, 2-up. */
+.omni-tasks-page .omni-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 520px) {
+  .omni-tasks-page .omni-edit-grid { grid-template-columns: 1fr; }
+}
+.omni-tasks-page .omni-f-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.omni-tasks-page .omni-f-lbl { font: 700 9.5px var(--sans); text-transform: uppercase; letter-spacing: .8px; color: var(--dim); }
+.omni-tasks-page .omni-field-full { grid-column: 1 / -1; }
+
+.omni-tasks-page .omni-f-select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--neutral-400);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+  padding: 9px 30px 9px 12px;
+  font: 500 13px var(--sans);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  height: 38px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.omni-tasks-page .omni-f-select:focus { border-color: var(--brand-gold); box-shadow: 0 0 0 3px rgba(18, 110, 92, .12); }
+
+.omni-tasks-page .omni-select-wrap { position: relative; }
+.omni-tasks-page .omni-sel-arrow {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dim);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+/* Task Status row: select + live color dot */
+.omni-tasks-page .omni-status-select-row { display: flex; align-items: center; gap: 8px; }
+.omni-tasks-page .omni-status-select-row .omni-select-wrap { flex: 1; min-width: 0; }
+.omni-tasks-page .omni-status-dot-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Agent — real LookupInput component (live server search against
+   Systemusers via searchUsers, same as "Assigned To" elsewhere in the app —
+   not a pre-loaded/capped local list). .lookup-wrap/.lookup-input etc. are
+   already styled globally via styles/modal.css, just nudge the input height
+   to match the other fields' 38px. */
+.omni-tasks-page .omni-f-field .lookup-input { height: 38px; font: 500 13px var(--sans); }
+
+/* Footer — Cancel + Save Disposition, side by side, plus a save-error line
+   that appears above them when the real Insurance Required write fails. */
+.omni-tasks-page .omni-panel-foot { display: flex; flex-wrap: wrap; gap: 8px; position: relative; }
+.omni-tasks-page .omni-panel-foot .btn { flex: 1; }
+.omni-tasks-page .omni-panel-foot .btn-outline { flex: 0 0 auto; }
+.omni-tasks-page .omni-save-error {
+  flex-basis: 100%;
+  font: 500 11.5px var(--body);
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+}
+
+@media (max-width: 720px) {
+  .omni-tasks-page.app-shell { padding: 14px; }
+}
+
+/* Columns that used to live only in the disposition panel. */
+.omni-tasks-page .omni-cycle-id { font: 500 12px var(--mono); color: var(--text-primary); }
+.omni-tasks-page .omni-path { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-body); white-space: nowrap; }
+.omni-tasks-page .omni-path svg { font-size: 11px; color: var(--dim); }
+.omni-tasks-page .omni-yn {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font: 600 11px var(--sans);
+  color: var(--dim);
+  background: var(--surface-hover);
+}
+.omni-tasks-page .omni-yn.is-yes { color: var(--green-dark); background: color-mix(in srgb, var(--green-dark) 12%, transparent); }

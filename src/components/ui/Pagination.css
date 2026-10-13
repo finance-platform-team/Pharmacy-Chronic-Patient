@@ -1,0 +1,119 @@
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  font: 400 12px var(--body);
+  color: var(--muted);
+}
+
+.pagination-info strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Shared sizing/typography — matches the table's own body font (--body),
+   not the heavier uppercase --sans used for headers. */
+.pagination-nav-btn,
+.pagination-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  background: none;
+  color: var(--text-body);
+  font: 500 12px var(--body);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+/* Rounded/pill-style page number buttons. */
+.pagination-page-btn {
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+}
+
+/* Minimal outlined prev/next arrow buttons — round, always-visible thin
+   border so they read as distinct icon buttons rather than plain text. */
+.pagination-nav-btn {
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.pagination-nav-btn:hover:not(:disabled),
+.pagination-page-btn:hover:not(.active) {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.pagination-nav-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.pagination-page-btn.active {
+  background: var(--grad-gold);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-gold);
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-size label {
+  font: 500 11px var(--body);
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+.pagination-size-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  color: var(--text-primary);
+  padding: 5px 12px;
+  font: 500 12px var(--body);
+  outline: none;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.pagination-size-select:focus {
+  border-color: var(--brand-gold);
+}
+
+@media (max-width: 720px) {
+  .pagination-bar {
+    justify-content: center;
+    text-align: center;
+  }
+}

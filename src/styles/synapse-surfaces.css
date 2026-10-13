@@ -1,0 +1,98 @@
+/* Synapse surface layer — gives every page the reference's frosted panels:
+   white-edged glass cards with an asymmetric squircle radius on a soft
+   mint/pearl canvas. Selectors are prefixed with .syn-main .app-shell so they
+   outrank the per-page stylesheets (which load later, lazily) without
+   touching them; page-specific accents (e.g. the featured green stat card)
+   use more specific selectors and still win. */
+
+:root {
+  --syn-panel-bg: rgba(255, 255, 255, .62);
+  --syn-panel-solid: rgba(255, 255, 255, .86);
+  --syn-panel-border: rgba(255, 255, 255, .82);
+  --syn-panel-shadow: 0 13px 28px rgba(42, 74, 67, .08), inset 0 1px 0 rgba(255, 255, 255, .88);
+  --syn-squircle: 24px 20px 25px 21px / 21px 25px 20px 24px;
+  --syn-squircle-sm: 17px 14px 18px 15px / 15px 18px 14px 17px;
+}
+:root[data-theme="dark"] {
+  --syn-panel-bg: rgba(18, 37, 35, .78);
+  --syn-panel-solid: #0F221E;
+  --syn-panel-border: rgba(255, 255, 255, .07);
+  --syn-panel-shadow: 0 13px 28px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+/* Canvas: green-first light with a faint violet trace, as in the reference. */
+body {
+  background:
+    radial-gradient(ellipse 110vw 90vh at 6% 110%, rgba(47, 201, 156, .17), transparent 74%),
+    radial-gradient(ellipse 100vw 90vh at 48% -9%, rgba(255, 255, 255, .98), transparent 73%),
+    radial-gradient(ellipse 60vw 70vh at 108% 36%, rgba(137, 104, 211, .07), transparent 76%),
+    linear-gradient(0deg, #E8F4EF 0%, #F1F7F4 38%, #FAFBF9 70%, #F6F4FA 100%);
+  background-attachment: fixed;
+}
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse 90vw 80vh at -8% 105%, rgba(37, 125, 104, .12), transparent 69%),
+    radial-gradient(ellipse 90vw 80vh at 104% -6%, rgba(72, 57, 127, .12), transparent 70%),
+    linear-gradient(137deg, #0B1C1A 0%, #091716 58%, #071311 100%);
+  background-attachment: fixed;
+}
+
+/* Page content sits inside the shell with the reference's padding. */
+.syn-main .app-shell { padding: 14px 22px 22px; gap: 14px; }
+
+/* Header strip, filter panels, stat tiles: frosted glass. */
+.syn-main .app-shell .page-header,
+.syn-main .app-shell .filters-panel,
+.syn-main .app-shell .refill-filters-panel,
+.syn-main .app-shell .stat-card {
+  background: var(--syn-panel-bg);
+  border: 1px solid var(--syn-panel-border);
+  box-shadow: var(--syn-panel-shadow);
+  backdrop-filter: blur(18px) saturate(100%);
+}
+.syn-main .app-shell .page-header { border-radius: var(--syn-squircle-sm); padding: 12px 18px; }
+.syn-main .app-shell .stat-card { border-radius: var(--syn-squircle-sm); }
+/* Featured tiles keep their dark gradient (their text is white) over the frosted default. */
+.syn-main .app-shell .stat-card.is-featured {
+  background: var(--grad-feature);
+  border-color: transparent;
+  box-shadow: var(--shadow-feature);
+}
+
+/* Clickable stat cards: each one filters its page; the active card gets a brand ring. */
+.syn-main .app-shell .stat-card-btn {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.syn-main .app-shell .stat-card-btn:hover { transform: translateY(-2px); }
+.syn-main .app-shell .stat-card-btn.is-active {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-gold) 22%, transparent), var(--syn-panel-shadow);
+}
+.syn-main .app-shell .stat-card-btn.is-featured.is-active {
+  box-shadow: 0 0 0 3px rgba(64, 255, 184, .45), var(--shadow-feature);
+}
+
+/* Table card: a raised, near-solid white sheet so dense rows stay readable. */
+.syn-main .app-shell .bento.flush {
+  background: var(--syn-panel-solid);
+  border: 1px solid var(--syn-panel-border);
+  border-radius: var(--syn-squircle);
+  box-shadow: var(--syn-panel-shadow);
+}
+
+/* Table header: flat pearl band with small uppercase muted labels. */
+.syn-main .app-shell table thead th {
+  background: rgba(245, 248, 247, .96);
+  color: #788783;
+  border-bottom-color: rgba(35, 76, 69, .1);
+}
+:root[data-theme="dark"] .syn-main .app-shell table thead th {
+  background: #142A25;
+  color: #8FA39D;
+  border-bottom-color: rgba(205, 235, 226, .06);
+}

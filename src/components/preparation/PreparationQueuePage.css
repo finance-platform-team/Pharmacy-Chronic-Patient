@@ -1,0 +1,307 @@
+/* Prep Queue — implements ref.html exactly: KPI stat row, toolbar with search
+   + status chips, and a data table with a dedicated left urgency track-bar
+   column, a stacked pipeline stepper for Prep Status, and colored SLA chips.
+   Reuses the shared .page-header / .segmented-toggle / .btn / .bento.flush
+   patterns already established by the other pages; only what's genuinely
+   specific to this page's table is defined here. */
+
+.preparation-queue-page.app-shell {
+  gap: 16px;
+  padding: 18px 24px 24px;
+}
+
+.preparation-queue-page .cis-page {
+  width: 38px;
+  height: 38px;
+}
+
+/* ---- KPI stat row (ref.html: .stat-row / .stat-card) ---- */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 860px) {
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+.stat-card {
+  background: var(--grad-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.sc-alert::before { background: var(--danger); }
+.sc-gold::before { background: var(--grad-gold); }
+.sc-green::before { background: var(--grad-green); }
+.sc-dim::before { background: var(--neutral-400); }
+.stat-lbl {
+  font: 700 9px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+.stat-val {
+  font: 800 26px var(--mono);
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-meta { font-size: 10.5px; color: var(--dim); }
+
+/* Featured tile — the one number on the page that needs action, on the deep
+   Synapse green surface (design-system reference card). */
+.stat-card.is-featured {
+  border-color: transparent;
+  background: var(--grad-feature);
+  box-shadow: var(--shadow-feature);
+}
+.stat-card.is-featured::before { display: none; }
+.stat-card.is-featured .stat-lbl { color: rgba(255, 255, 255, .78); }
+.stat-card.is-featured .stat-val { color: #fff; }
+.stat-card.is-featured .stat-meta { color: rgba(255, 255, 255, .72); }
+
+/* ---- Toolbar: search + status chips + sort note (ref.html: .toolbar) ---- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.search-box {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 9px 12px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.search-box:focus-within {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 3px rgba(18, 110, 92, .12);
+}
+.search-box svg { font-size: 12px; color: var(--dim); flex-shrink: 0; }
+.search-box input {
+  border: none;
+  outline: none;
+  font: 400 13px var(--body);
+  width: 100%;
+  background: transparent;
+  color: var(--text-primary);
+}
+.search-box input::placeholder { color: var(--dim); }
+
+.sort-note {
+  margin-left: auto;
+  font: 500 11px var(--body);
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sort-note svg { font-size: 10px; }
+
+/* ---- Table shell (ref.html: .bento.flush / .table-scroll / table) ---- */
+.preparation-queue-page .bento.flush { padding: 0; }
+.table-scroll { flex: 1; overflow: auto; position: relative; }
+.preparation-queue-page table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1120px;
+}
+.preparation-queue-page thead th {
+  text-align: left;
+  font: 700 11px var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--table-head-text);
+  padding: 13px 16px;
+  background: var(--table-head);
+  border-bottom: 1px solid rgba(18, 110, 92, .16);
+  white-space: nowrap;
+}
+.preparation-queue-page thead th.th-sortable { cursor: pointer; user-select: none; }
+.preparation-queue-page thead th.th-sortable:hover { color: var(--gold-dark); background: var(--brand-gold-100); }
+.preparation-queue-page thead th.th-sortable:hover .sort-arrow { opacity: 1; }
+.preparation-queue-page tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .18s cubic-bezier(.22, 1, .36, 1);
+  animation: prep-row-in .24s cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.preparation-queue-page tbody tr:nth-child(1) { animation-delay: 0ms; }
+.preparation-queue-page tbody tr:nth-child(2) { animation-delay: 40ms; }
+.preparation-queue-page tbody tr:nth-child(3) { animation-delay: 80ms; }
+.preparation-queue-page tbody tr:nth-child(4) { animation-delay: 120ms; }
+@keyframes prep-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.preparation-queue-page tbody tr:last-child { border-bottom: none; }
+.preparation-queue-page tbody tr:hover { background: var(--surface-hover); }
+.preparation-queue-page tbody tr.is-urgent { background: linear-gradient(90deg, var(--danger-soft), transparent 55%); }
+.preparation-queue-page tbody tr.is-urgent:hover { background: linear-gradient(90deg, rgba(178, 58, 58, .14), var(--surface-hover) 55%); }
+.preparation-queue-page td {
+  padding: 14px 16px;
+  font: 400 13px var(--body);
+  vertical-align: middle;
+  color: var(--text-body);
+}
+
+/* Left-edge urgency indicator — a real table cell/column, not a box-shadow. */
+.track-bar-cell { width: 3px; padding: 0 !important; }
+.track-bar { width: 3px; height: 100%; min-height: 52px; }
+.tb-alert { background: var(--danger); }
+.tb-gold { background: var(--grad-gold); }
+.tb-green { background: var(--grad-green); }
+
+/* Cycle ID / Rx ID */
+.mono-id { font: 600 12px var(--mono); color: var(--text-body); letter-spacing: -.3px; }
+
+/* Patient cell — fixed gold-tinted rounded-square avatar (not per-name colors) */
+.patient-cell { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 11px var(--sans);
+  flex-shrink: 0;
+}
+.patient-name { font: 600 13px var(--sans); color: var(--text-primary); white-space: nowrap; }
+
+/* BU tag */
+.bu-tag {
+  display: inline-flex;
+  align-items: center;
+  font: 600 11px var(--sans);
+  color: var(--text-body);
+  background: var(--neutral-200);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+/* Fulfilment path */
+.path-cell { display: inline-flex; align-items: center; gap: 6px; font: 500 12.5px var(--body); color: var(--text-body); white-space: nowrap; }
+.path-cell svg { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
+/* Prep Status — stacked pipeline stepper: label, then the 4-segment track below it */
+.pipeline { display: flex; flex-direction: column; gap: 6px; min-width: 168px; }
+.pipeline .stage-label { font: 700 11.5px var(--sans); letter-spacing: -.1px; white-space: nowrap; }
+.pipeline .track { display: flex; gap: 3px; }
+.pipeline .seg { flex: 1; height: 5px; border-radius: var(--r-pill); background: var(--neutral-300); }
+.pipeline .seg.done { background: var(--green-dark); }
+.pipeline .seg.current.warn-seg { background: var(--warning); }
+.pipeline .seg.current.gold-seg { background: var(--brand-gold); }
+.pipeline .seg.current.alert-seg { background: var(--danger); }
+.status-pending .stage-label { color: var(--danger); }
+.status-underprep .stage-label { color: var(--gold-dark); }
+.status-ready .stage-label { color: var(--green-dark); }
+
+/* Prep SLA — soft-tint chip; "none" is plain dim text, no pill at all */
+.sla { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--r-sm); font: 600 11.5px var(--mono); white-space: nowrap; }
+/* Live timer, still running (pending or under prep) — subtle gold tint. */
+.sla.running { background: var(--gold-soft); color: var(--gold-dark); }
+/* Frozen at Ready — final elapsed time stays visible in a distinct "done" tint. */
+.sla.stopped { background: var(--green-soft); color: var(--green-dark); }
+.sla.none { color: var(--dim); font: 500 12px var(--mono); }
+.sla svg { font-size: 10px; flex-shrink: 0; }
+
+/* Pharmacist cell — circular green-gradient avatar */
+.pharm-cell { display: flex; align-items: center; gap: 9px; }
+.pharm-av {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--grad-green);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 10px var(--sans);
+  flex-shrink: 0;
+}
+.pharm-name { font: 500 12.5px var(--body); color: var(--text-primary); white-space: nowrap; }
+
+/* Action column */
+.actions-cell { white-space: nowrap; }
+.preparation-queue-page .btn-sm { padding: 5px 11px; font-size: 10.5px; }
+.preparation-queue-page .btn-success { background: var(--grad-green); color: #fff; }
+.preparation-queue-page .btn-success:hover:not(:disabled) { box-shadow: 0 6px 16px rgba(18, 110, 92, .25); }
+
+.fulfilled-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: var(--r-pill);
+  background: var(--green-soft);
+  border: 1px solid rgba(45, 122, 74, .28);
+  color: var(--green-dark);
+  font: 700 12px var(--sans);
+  white-space: nowrap;
+}
+
+.prep-empty-row {
+  padding: 40px 20px !important;
+  text-align: center;
+  color: var(--muted);
+  font: 500 12px var(--sans);
+}
+
+/* Table footer: legend + shown count */
+.table-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-hover);
+  flex-wrap: wrap;
+}
+.legend { display: flex; gap: 18px; flex-wrap: wrap; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font: 500 10.5px var(--body); color: var(--muted); }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.foot-count { font: 500 11px var(--body); color: var(--dim); }
+
+@media (max-width: 620px) {
+  .preparation-queue-page table, .preparation-queue-page thead, .preparation-queue-page tbody,
+  .preparation-queue-page th, .preparation-queue-page td, .preparation-queue-page tr { display: block; }
+  .preparation-queue-page thead { display: none; }
+  .track-bar-cell { display: none; }
+  .preparation-queue-page tbody tr { padding: 14px 16px; border-bottom: 8px solid var(--canvas); animation: none; }
+  .preparation-queue-page td { padding: 7px 0; border: none; }
+
+  /* The desktop table's 1120px min-width (needed for its column layout) is
+     meaningless once display:block stacks the rows into cards above — left
+     unset, it still forces the whole card to be at least 1120px wide,
+     which is what caused the double horizontal+vertical scrollbar on
+     mobile. Also let the card's own nowrap labels wrap instead of forcing
+     width, since there's no column layout left to preserve. */
+  .preparation-queue-page table { min-width: 0; width: 100%; }
+  .preparation-queue-page .pipeline { min-width: 0; width: 100%; }
+  .preparation-queue-page .pipeline .stage-label,
+  .preparation-queue-page .patient-name,
+  .preparation-queue-page .pharm-name,
+  .preparation-queue-page .path-cell { white-space: normal; }
+}
