@@ -53,6 +53,12 @@ const AVAILABILITY_FILTER_OPTIONS: SegmentedOption<string>[] = [
   { value: '766990002', label: 'Out of Stock', tone: 'danger' }
 ];
 
+const DISPENSED_FILTER_OPTIONS: SegmentedOption<RefillFilters['dispensed']>[] = [
+  { value: '', label: 'All' },
+  { value: 'yes', label: 'Yes', tone: 'success' },
+  { value: 'no', label: 'No', tone: 'neutral' }
+];
+
 // Text on the Cycle Due pill: the preset's name, or the picked range.
 function dueLabel(f: RefillFilters): string | null {
   if (f.dueRange === 'all') return null;
@@ -249,7 +255,8 @@ export function DueRefillQueuePage() {
     cycleDue: (r) => r.monthlyDispensingDate,
     dispensedValue: (r) => r.dispensedValue,
     eligibility: (r) => r.eligibility,
-    availability: (r) => r.availability
+    availability: (r) => r.availability,
+    dispensed: (r) => (r.dispensed ? 1 : 0)
   }), []);
   const { sorted: sortedRows, sortKey, sortDir, toggleSort } = useSort(filteredRows, sortAccessors);
 
@@ -399,10 +406,10 @@ export function DueRefillQueuePage() {
   }
 
   function clearAllFilters() {
-    setFilters({ ...filters, search: '', availability: '', dueRange: 'all', fromDate: '', toDate: '' });
+    setFilters({ ...filters, search: '', availability: '', dispensed: '', dueRange: 'all', fromDate: '', toDate: '' });
   }
 
-  const activeFilterCount = [filters.search, filters.availability, filters.dueRange !== 'all'].filter(Boolean).length;
+  const activeFilterCount = [filters.search, filters.availability, filters.dispensed, filters.dueRange !== 'all'].filter(Boolean).length;
 
   useEffect(() => {
     if (!editing) return;
@@ -715,6 +722,14 @@ export function DueRefillQueuePage() {
             onChange={(availability) => setFilters({ ...filters, availability })}
           />
 
+          <SegmentedFilter<RefillFilters['dispensed']>
+            label="Dispensed"
+            icon={faCapsules}
+            value={filters.dispensed}
+            options={DISPENSED_FILTER_OPTIONS}
+            onChange={(dispensed) => setFilters({ ...filters, dispensed })}
+          />
+
           <SegmentedFilter<QuickFilter>
             label="Status"
             value={quickFilter}
@@ -768,6 +783,7 @@ export function DueRefillQueuePage() {
                   <SortableTh label="Chronic Status" sortKey="chronicStatus" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Cycle Due" sortKey="cycleDue" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Dispensed Value" sortKey="dispensedValue" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh label="Dispensed" sortKey="dispensed" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Eligibility" sortKey="eligibility" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Availability" sortKey="availability" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <th style={{ textAlign: 'right' }}>Action</th>
@@ -776,7 +792,7 @@ export function DueRefillQueuePage() {
               <tbody>
                 {sortedRows.length === 0 && (
                   <tr>
-                    <td colSpan={13} className="refill-empty-row">No cycles match the current filters.</td>
+                    <td colSpan={14} className="refill-empty-row">No cycles match the current filters.</td>
                   </tr>
                 )}
                 {sortedRows.map((r) => {
@@ -812,13 +828,14 @@ export function DueRefillQueuePage() {
                         <td>{r.chronicStatus ? <span className={`pill ${chronicClass(r.chronicStatus)}`}>{r.chronicStatus}</span> : '—'}</td>
                         <td><span className="mono-date">{formatCycleDue(r.monthlyDispensingDate)}</span></td>
                         <td className="num">{r.dispensedValue !== null ? formatMoney(r.dispensedValue) : '—'}</td>
+                        <td><span className={`pill ${r.dispensed ? 'pill-success' : 'pill-muted'}`}>{r.dispensed ? 'Yes' : 'No'}</span></td>
                         {renderStatusCell(r, 'eligibility')}
                         {renderStatusCell(r, 'availability')}
                         {renderActionCell(r)}
                       </tr>
                       {isExpanded && (
                         <tr className="product-subrow">
-                          <td className="product-subrow-cell" colSpan={13}>
+                          <td className="product-subrow-cell" colSpan={14}>
                             {renderProductsCard(r)}
                           </td>
                         </tr>

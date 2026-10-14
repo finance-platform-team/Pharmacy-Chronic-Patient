@@ -24,6 +24,8 @@ export const DUE_RANGE_PRESETS: { value: DueRange; label: string }[] = [
 export interface RefillFilters {
   search: string;
   availability: string;
+  /** cr18c_dispensed: '' = all, 'yes' / 'no' = only that value. */
+  dispensed: '' | 'yes' | 'no';
   /** When true, further narrow the (already user-assigned-only) queue to just the signed-in user's records. */
   myWorkOnly: boolean;
   dueRange: DueRange;
@@ -35,6 +37,7 @@ export interface RefillFilters {
 export const EMPTY_REFILL_FILTERS: RefillFilters = {
   search: '',
   availability: '',
+  dispensed: '',
   myWorkOnly: true,
   dueRange: 'all',
   fromDate: '',
@@ -83,6 +86,10 @@ export function buildRefillFilter(f: RefillFilters): string {
 
   if (f.availability) {
     parts.push(`chp_availability eq ${f.availability}`);
+  }
+
+  if (f.dispensed) {
+    parts.push(`cr18c_dispensed eq ${f.dispensed === 'yes'}`);
   }
 
   if (f.fromDate) {
