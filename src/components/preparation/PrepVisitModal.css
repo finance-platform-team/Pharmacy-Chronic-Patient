@@ -1,0 +1,104 @@
+.prep-visit-modal .modal-body { display: flex; flex-direction: column; gap: 14px; }
+
+.prep-visit-modal .visit-info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; }
+.prep-visit-modal .visit-info-grid .form-field { margin-bottom: 0; }
+.prep-visit-modal .visit-info-grid .field-readonly { cursor: default; }
+
+.prep-visit-modal .visit-rx-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.prep-visit-modal .visit-rx-head .section-title { display: flex; align-items: center; gap: 8px; }
+.prep-visit-modal .visit-rx-current { font: 700 9.5px var(--sans); letter-spacing: .5px; color: var(--green-dark); background: var(--surface-hover); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; text-transform: uppercase; }
+.prep-visit-modal .visit-rx-meta { font: 500 11px var(--mono); color: var(--dim); }
+
+/* Fixed layout so the table always fits the card instead of scrolling sideways. */
+.prep-visit-modal .visit-products { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.prep-visit-modal .visit-products .col-item { width: 22%; }
+.prep-visit-modal .visit-products .col-qty { width: 80px; }
+.prep-visit-modal .visit-products .col-price { width: 110px; }
+.prep-visit-modal .visit-products .col-action { width: 76px; }
+.prep-visit-modal .visit-products th { font: 700 10px var(--sans); text-transform: uppercase; letter-spacing: .8px; color: var(--dim); text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--border); }
+.prep-visit-modal .visit-products td { font: 500 12.5px var(--sans); color: var(--text-primary); padding: 5px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.prep-visit-modal .visit-products tfoot td { border-bottom: none; padding-top: 10px; }
+.prep-visit-modal .visit-products .num { text-align: right; }
+.prep-visit-modal .visit-products .mono { font-family: var(--mono); }
+.prep-visit-modal .visit-products .field-input { padding: 6px 8px; min-width: 0; }
+.prep-visit-modal .visit-products .field-input:disabled { background: transparent; }
+
+.prep-visit-modal .visit-products tr.is-new td { background: rgba(18, 110, 92, .05); }
+.prep-visit-modal .visit-products tr.is-edited td { background: var(--brand-gold-100); }
+.prep-visit-modal .visit-products tr.is-deleted .field-input { text-decoration: line-through; color: var(--danger); opacity: .7; }
+
+.prep-visit-modal .visit-actions { text-align: right; white-space: nowrap; }
+.prep-visit-modal .visit-actions .visit-icon-btn + .visit-icon-btn { margin-left: 4px; }
+.prep-visit-modal .visit-cell-text { overflow-wrap: anywhere; }
+.prep-visit-modal .visit-products tr.is-deleted td:not(.visit-actions) { text-decoration: line-through; color: var(--danger); opacity: .7; }
+.prep-visit-modal .visit-icon-btn { background: none; border: 1px solid var(--border); border-radius: var(--r-sm); width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; }
+.prep-visit-modal .visit-icon-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+.prep-visit-modal .visit-icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+.prep-visit-modal .visit-icon-btn:disabled { opacity: .5; cursor: not-allowed; }
+.prep-visit-modal .visit-empty { color: var(--dim); text-align: center; }
+.prep-visit-modal .visit-total { font-weight: 700; }
+
+.prep-visit-modal .visit-notes { resize: vertical; min-height: 72px; font-family: var(--body); }
+
+.prep-visit-modal .visit-footer { align-items: center; }
+.prep-visit-modal .visit-message { margin-right: auto; font: 600 12px var(--sans); }
+.prep-visit-modal .visit-message.success { color: var(--green-dark); }
+.prep-visit-modal .visit-message.error { color: var(--danger); }
+.prep-visit-modal .visit-message.pending { color: var(--gold-dark); }
+
+@media (max-width: 720px) {
+  .prep-visit-modal .visit-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Preparation status bar: Called → Medication Recorded → Ready for Pickup / Delivery → Fulfilled */
+.prep-visit-modal .visit-stage-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.prep-visit-modal .visit-stage-head .section-title { margin: 0; }
+.prep-visit-modal .visit-stage-bar { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.prep-visit-modal .visit-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; padding-top: 2px; }
+.prep-visit-modal .visit-stage::before { content: ''; position: absolute; top: 15px; left: calc(-50% + 16px); right: calc(50% + 16px); height: 3px; border-radius: 999px; background: var(--neutral-300); }
+.prep-visit-modal .visit-stage:first-child::before { display: none; }
+.prep-visit-modal .visit-stage.done::before,
+.prep-visit-modal .visit-stage.current::before { background: var(--green-dark); }
+.prep-visit-modal .visit-stage-dot { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font: 700 12px var(--sans); background: var(--surface); border: 2px solid var(--neutral-300); color: var(--dim); position: relative; z-index: 1; }
+.prep-visit-modal .visit-stage.done .visit-stage-dot { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+.prep-visit-modal .visit-stage.current .visit-stage-dot { background: var(--brand-gold); border-color: var(--brand-gold); color: #fff; box-shadow: 0 0 0 4px rgba(18, 110, 92, .15); }
+.prep-visit-modal .visit-stage-label { font: 600 11px var(--sans); color: var(--dim); line-height: 1.3; }
+.prep-visit-modal .visit-stage.done .visit-stage-label { color: var(--text-primary); }
+.prep-visit-modal .visit-stage.current .visit-stage-label { color: var(--green-dark); font-weight: 700; }
+
+/* Print layout — rendered into document.body, hidden on screen, the only thing printed. */
+.visit-print { display: none; }
+
+@media print {
+  @page { size: A5 portrait; margin: 8mm; }
+
+  body > *:not(.visit-print) { display: none !important; }
+  html, body { background: #fff !important; }
+
+  .visit-print { display: block; color: #000; font: 9pt/1.35 Arial, sans-serif; }
+  .visit-print section { margin-top: 9px; break-inside: avoid; }
+  .visit-print h3 { font-size: 9.5pt; margin: 0 0 4px; padding-bottom: 2px; border-bottom: 1px solid #999; }
+
+  .visit-print .vp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding-bottom: 6px; border-bottom: 2px solid #000; }
+  .visit-print .vp-title { font-size: 13pt; font-weight: 700; }
+  .visit-print .vp-sub { font-size: 8.5pt; color: #333; }
+  .visit-print .vp-status { font-size: 8.5pt; font-weight: 700; border: 1px solid #000; border-radius: 4px; padding: 2px 6px; white-space: nowrap; }
+
+  .visit-print .vp-info { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 8px; margin: 0; }
+  .visit-print .vp-info dt { font-weight: 700; color: #333; }
+  .visit-print .vp-info dd { margin: 0; }
+
+  .visit-print .vp-stages { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+  .visit-print .vp-stages li { flex: 1; text-align: center; font-size: 7.5pt; padding: 3px 2px; border: 1px solid #999; border-radius: 3px; color: #777; }
+  .visit-print .vp-stages li.reached { border-color: #000; color: #000; font-weight: 700; background: #eee; }
+
+  .visit-print .vp-table { width: 100%; border-collapse: collapse; }
+  .visit-print .vp-table th,
+  .visit-print .vp-table td { border: 1px solid #bbb; padding: 2px 4px; text-align: left; }
+  .visit-print .vp-table th { background: #eee; font-size: 8pt; }
+  .visit-print .vp-table .num { text-align: right; white-space: nowrap; }
+  .visit-print .vp-table tfoot td { font-weight: 700; }
+
+  .visit-print .vp-notes { margin: 0; white-space: pre-wrap; }
+  .visit-print .vp-foot { margin-top: 10px; font-size: 7.5pt; color: #555; text-align: right; }
+}

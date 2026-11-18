@@ -5,6 +5,8 @@ import { getAllOmniTasks, type OmniTaskRow, type OmniTaskStatus } from '../../ap
 import { recordMatchesRegion, getRegionBusinessUnits, type LookupOption } from '../../api/businessUnitsApi';
 import { useRegion } from '../../context/RegionContext';
 import { RefreshButton } from '../ui/RefreshButton';
+import { ExportExcelButton } from '../ui/ExportExcelButton';
+import type { XlsxColumn } from '../../domain/xlsx';
 import { LookupInput } from '../ui/LookupInput';
 import { Pagination } from '../ui/Pagination';
 import { usePagination, paginateItems } from '../../hooks/usePagination';
@@ -37,6 +39,20 @@ function statusTone(status: OmniTaskStatus): FilterTone {
   if (status === 'Not Reached – Escalated') return 'danger';
   return 'neutral';
 }
+
+const EXPORT_COLUMNS: XlsxColumn<OmniTaskRow>[] = [
+  { header: 'Pharmacist', value: (t) => t.pharmacist, width: 26 },
+  { header: 'Patient', value: (t) => t.patient, width: 32 },
+  { header: 'Patient Mobile', value: (t) => t.patientMobile, width: 16 },
+  { header: 'BU', value: (t) => t.bu },
+  { header: 'Dispatched', value: (t) => (t.dispatched ? formatDispatched(t.dispatched) : null), width: 14 },
+  { header: 'Attempts', value: (t) => t.attempts },
+  { header: 'Status', value: (t) => STATUS_LABELS[t.status], width: 26 },
+  { header: 'Agent', value: (t) => t.agent, width: 22 },
+  { header: 'Fulfilment Path', value: (t) => t.fulfilmentPath, width: 16 },
+  { header: 'Insurance Required', value: (t) => (t.insuranceRequired === null ? null : t.insuranceRequired ? 'Yes' : 'No'), width: 18 },
+  { header: 'Will Dispense', value: (t) => (t.willDispense ? 'Yes' : 'No'), width: 14 }
+];
 
 function initials(name: string | null): string {
   if (!name) return '?';
@@ -123,7 +139,6 @@ export function OmniTasksPage() {
       result = result.filter((t) =>
         (t.patient ?? '').toLowerCase().includes(q)
         || (t.patientMobile ?? '').toLowerCase().includes(q)
-        || (t.cycleId ?? '').toLowerCase().includes(q)
         || (t.pharmacist ?? '').toLowerCase().includes(q)
       );
     }
@@ -142,7 +157,6 @@ export function OmniTasksPage() {
   );
 
   const sortAccessors = useMemo<Record<string, SortAccessor<OmniTaskRow>>>(() => ({
-    cycleId: (t) => t.cycleId,
     patient: (t) => t.patient,
     bu: (t) => t.bu,
     dispatched: (t) => (t.dispatched ? Date.parse(t.dispatched) : null),
@@ -175,6 +189,7 @@ export function OmniTasksPage() {
             </div>
           </div>
           <div className="toolbar-summary">
+            <ExportExcelButton fileName="omni-tasks" sheetName="Omni Tasks" columns={EXPORT_COLUMNS} rows={sortedTasks} />
             <RefreshButton onRefresh={refresh} />
           </div>
         </div>
@@ -185,7 +200,7 @@ export function OmniTasksPage() {
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
           <input
             type="text"
-            placeholder="Search patient, mobile, cycle or pharmacist…"
+            placeholder="Search patient, mobile or pharmacist…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -226,7 +241,6 @@ export function OmniTasksPage() {
               <thead>
                 <tr>
                   <SortableTh label="Pharmacist" sortKey="pharmacist" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-                  <SortableTh label="Cycle ID" sortKey="cycleId" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Patient" sortKey="patient" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="BU" sortKey="bu" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Dispatched" sortKey="dispatched" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
@@ -239,7 +253,7 @@ export function OmniTasksPage() {
               <tbody>
                 {pageTasks.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="omni-empty-row">
+                    <td colSpan={8} className="omni-empty-row">
                       <FontAwesomeIcon icon={faHeadset} aria-hidden="true" />
                       <div>No contact tasks match the current filters.</div>
                     </td>
@@ -258,11 +272,6 @@ export function OmniTasksPage() {
                         ) : (
                           <span className="omni-dim omni-unassigned">Unassigned</span>
                         )}
-                      </td>
-                      <td>
-                        <span className="omni-cycle-id" title={task.cycleId ?? undefined}>
-                          {task.cycleId ? task.cycleId.slice(0, 8) : '—'}
-                        </span>
                       </td>
                       <td>
                         <div className="omni-patient">

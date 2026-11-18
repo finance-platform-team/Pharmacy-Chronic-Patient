@@ -210,12 +210,15 @@
 .pipeline .track { display: flex; gap: 3px; }
 .pipeline .seg { flex: 1; height: 5px; border-radius: var(--r-pill); background: var(--neutral-300); }
 .pipeline .seg.done { background: var(--green-dark); }
-.pipeline .seg.current.warn-seg { background: var(--warning); }
-.pipeline .seg.current.gold-seg { background: var(--brand-gold); }
-.pipeline .seg.current.alert-seg { background: var(--danger); }
-.status-pending .stage-label { color: var(--danger); }
-.status-underprep .stage-label { color: var(--gold-dark); }
-.status-ready .stage-label { color: var(--green-dark); }
+/* The step currently being worked on keeps the stage color; earlier steps are done (green). */
+.status-called .seg.current { background: var(--danger); }
+.status-recorded .seg.current { background: var(--brand-gold); }
+.status-ready .seg.current { background: var(--green-dark); opacity: .55; }
+.status-none .stage-label { color: var(--dim); }
+.status-called .stage-label { color: var(--danger); }
+.status-recorded .stage-label { color: var(--gold-dark); }
+.status-ready .stage-label,
+.status-fulfilled .stage-label { color: var(--green-dark); }
 
 /* Prep SLA — soft-tint chip; "none" is plain dim text, no pill at all */
 .sla { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--r-sm); font: 600 11.5px var(--mono); white-space: nowrap; }
@@ -305,3 +308,10 @@
   .preparation-queue-page .pharm-name,
   .preparation-queue-page .path-cell { white-space: normal; }
 }
+
+/* AI cycles: the Pharmacy Visit ID opens the visit popup. */
+.preparation-queue-page .visit-link { background: none; border: none; padding: 0; cursor: pointer; color: var(--green-dark); text-decoration: underline; text-underline-offset: 3px; }
+.preparation-queue-page .visit-link:hover { color: var(--brand-gold); }
+.preparation-queue-page .visit-link:disabled { cursor: progress; text-decoration: none; color: var(--dim); }
+.preparation-queue-page .visit-link.plain { text-decoration: none; color: inherit; font: inherit; text-align: left; }
+.preparation-queue-page .visit-link.plain:hover { color: var(--green-dark); text-decoration: underline; }

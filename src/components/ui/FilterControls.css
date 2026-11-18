@@ -276,3 +276,96 @@
   }
   .date-clear { margin-top: 0; }
 }
+
+/* ---- Select popover (FilterSelectPill) — search box + pick list ---- */
+.select-popover {
+  display: flex;
+  flex-direction: column;
+  width: min(280px, calc(100vw - 16px));
+  padding: 8px;
+}
+.select-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--surface-hover);
+  color: var(--dim);
+  font-size: 11px;
+  transition: border-color .15s ease, background .15s ease;
+}
+.select-search:focus-within { background: var(--surface); border-color: var(--border); }
+/* The inner input must not pick up the app-wide focus ring — the wrapper shows focus. */
+.select-search input:focus,
+.select-search input:focus-visible { outline: none; box-shadow: none; border: none; }
+.select-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--text-primary);
+  font: 500 12.5px var(--sans);
+}
+.select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font: 500 12.5px var(--sans);
+  color: var(--text-body);
+  cursor: pointer;
+}
+.select-option-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select-option-hint { flex-shrink: 0; font: 500 11px var(--sans); color: var(--dim); }
+.select-option.is-selected .select-option-hint { color: var(--gold-dark); }
+.select-option-check { font-size: 10px; flex-shrink: 0; }
+.select-popover.has-avatars { width: min(320px, calc(100vw - 16px)); }
+.select-avatar,
+.filter-pill-avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+}
+.select-avatar { width: 26px; height: 26px; font-size: 10px; }
+.filter-pill-avatar { width: 22px; height: 22px; font-size: 9px; margin-left: -6px; }
+.select-option:hover { background: var(--surface-hover); }
+.select-option.is-selected { background: var(--gold-soft); color: var(--gold-dark); font-weight: 700; }
+.select-option-quick { font-weight: 600; }
+.select-divider { height: 1px; margin: 4px 2px; background: var(--border); }
+.select-empty { padding: 10px; font: 500 12px var(--sans); color: var(--dim); }
+.select-clear {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  text-align: left;
+  font: 600 12.5px var(--sans);
+  color: var(--danger);
+  cursor: pointer;
+}
+.select-clear:hover { background: var(--danger-soft); }
+
+/* Long picked values (pharmacy / user names) shouldn't stretch the pill. */
+.filter-pill .filter-pill-value { max-width: 160px; }

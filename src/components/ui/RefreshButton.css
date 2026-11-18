@@ -22,6 +22,11 @@
   cursor: progress;
   opacity: .85;
 }
+/* ExportExcelButton reuses this look; disabled there means "nothing to export". */
+.refresh-btn.export-btn:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
 
 .refresh-icon {
   display: inline-flex;

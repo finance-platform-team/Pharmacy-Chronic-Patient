@@ -1,10 +1,13 @@
 import { listRecords, updateRecord } from './dataverseClient';
 import type { ListOptions } from './dataverseClient';
-import { Chp_omnitaskschp_fulfilmentpath, Chp_omnitaskschp_prepstatus, Chp_omnitaskschp_taskstatus } from '../domain/dataverseModels/Chp_omnitasksModel';
+import { getPharmacyVisitIds } from './prescriptionsApi';
+import { Chp_omnitaskschp_fulfilmentpath, Chp_omnitaskschp_prepstatus, Chp_omnitaskschp_responsesource, Chp_omnitaskschp_taskstatus } from '../domain/dataverseModels/Chp_omnitasksModel';
 
 export interface PreparationTask {
   id: string;
   chpId: string | null;
+  /** cr18c_pid of the linked prescription — "Pharmacy Visit ID". */
+  pharmacyVisitId: string | null;
   patient: string | null;
   bu: string | null;
   pharmacist: string | null;
@@ -17,6 +20,13 @@ export interface PreparationTask {
   modifiedOn: string | null;
   taskStatus: string | null;
   taskStatusLabel: string | null;
+  /** chp_responsesource — who answered the cycle (WhatsApp / CRM / Manual / AI). */
+  responseSource: string | null;
+  responseSourceLabel: string | null;
+  /** chp_notes — the pharmacist's dispensing notes for this cycle. */
+  notes: string | null;
+  /** chp_Prescription lookup — the prescription this cycle was sent for. */
+  prescriptionId: string | null;
 }
 
 export async function getAllPreparationTasks(filter?: string): Promise<PreparationTask[]> {
@@ -33,6 +43,9 @@ export async function getAllPreparationTasks(filter?: string): Promise<Preparati
       'chp_preparationsla',
       'chp_willdispense',
       'chp_taskstatus',
+      'chp_responsesource',
+      'chp_notes',
+      '_chp_prescription_value',
       'modifiedon'
     ],
     orderBy: ['chp_id asc'],
@@ -44,6 +57,10 @@ export async function getAllPreparationTasks(filter?: string): Promise<Preparati
   }
 
   const rows = await listRecords<any>('chp_omnitasks', options, 'Failed to load preparation tasks');
+
+  // chp_omnitasks only carries the prescription lookup, not its cr18c_pid.
+  const prescriptionIds = rows.map((r) => r._chp_prescription_value as string | undefined).filter((id): id is string => !!id);
+  const visitIds = prescriptionIds.length > 0 ? await getPharmacyVisitIds(prescriptionIds) : new Map<string, string>();
 
   const getLabel = (map: Record<string, string>, value: unknown) => {
     if (value == null) return null;
@@ -59,6 +76,7 @@ export async function getAllPreparationTasks(filter?: string): Promise<Preparati
     return {
       id: record.chp_omnitaskid,
       chpId: record.chp_id ?? null,
+      pharmacyVisitId: (record._chp_prescription_value && visitIds.get(record._chp_prescription_value)) || null,
       patient: record.chp_patient ?? null,
       bu: record.chp_bu ?? null,
       pharmacist: record.chp_pharmacist ?? null,
@@ -70,7 +88,11 @@ export async function getAllPreparationTasks(filter?: string): Promise<Preparati
       willDispense: willDispense ? true : null,
       modifiedOn: record.modifiedon ?? null,
       taskStatus: record.chp_taskstatus != null ? String(record.chp_taskstatus) : null,
-      taskStatusLabel: record.chp_taskstatusname ?? getLabel(Chp_omnitaskschp_taskstatus, record.chp_taskstatus)
+      taskStatusLabel: record.chp_taskstatusname ?? getLabel(Chp_omnitaskschp_taskstatus, record.chp_taskstatus),
+      responseSource: record.chp_responsesource != null ? String(record.chp_responsesource) : null,
+      responseSourceLabel: record.chp_responsesourcename ?? getLabel(Chp_omnitaskschp_responsesource, record.chp_responsesource),
+      notes: record.chp_notes ?? null,
+      prescriptionId: record._chp_prescription_value ?? null
     };
   });
 }
@@ -93,11 +115,6 @@ export async function setPreparationStartTime(taskId: string): Promise<void> {
   await updateRecord('chp_omnitasks', taskId, payload, 'Failed to set preparation start time');
 }
 
-// Closes out a cycle that's already Ready — chp_prepstatus has no "Fulfilled" value of
-// its own, so this repurposes the otherwise-unused chp_taskstatus field (Not Reached /
-// Completed) as the final step.
-export async function markTaskFulfilled(taskId: string): Promise<void> {
-  const payload: Record<string, unknown> = { chp_taskstatus: '766990002' };
-
-  await updateRecord('chp_omnitasks', taskId, payload, 'Failed to mark cycle as fulfilled');
+export async function updateTaskNotes(taskId: string, notes: string): Promise<void> {
+  await updateRecord('chp_omnitasks', taskId, { chp_notes: notes || null }, 'Failed to save notes');
 }

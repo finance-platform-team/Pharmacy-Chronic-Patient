@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileCircleXmark, faFilePrescription, faRightLeft, faRotateLeft, faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBuilding, faFileCircleXmark, faFilePrescription, faPrescriptionBottleMedical, faRightLeft, faRotateLeft, faUserNurse
+} from '@fortawesome/free-solid-svg-icons';
 import { getRegionBusinessUnits, type LookupOption } from '../../api/businessUnitsApi';
-import { getDistinctPharmacyNames } from '../../api/patientsApi';
+import { getAssignedUsers, getDistinctPharmacyNames } from '../../api/patientsApi';
 import {
   CREATED_RANGE_OPTIONS, EMPTY_FILTERS, getCreatedWindow,
-  type CreatedRange, type PatientFilters, type UserAssignment
+  type CreatedRange, type PatientFilters
 } from '../../domain/patientFilters';
-import { ComboBox } from '../ui/ComboBox';
-import { LookupInput } from '../ui/LookupInput';
+import { FilterSelectPill, type FilterSelectOption } from '../ui/FilterSelectPill';
 import { DateRangePicker } from '../ui/DateRangePicker';
-import { SegmentedFilter, type SegmentedOption } from '../ui/SegmentedFilter';
 import { useRegion } from '../../context/RegionContext';
 
 interface PatientFiltersBarProps {
@@ -18,11 +18,18 @@ interface PatientFiltersBarProps {
   onChange: (f: PatientFilters) => void;
 }
 
-const ASSIGNMENT_OPTIONS: SegmentedOption<UserAssignment>[] = [
-  { value: 'all', label: 'All' },
-  { value: 'assigned', label: 'Assigned', tone: 'success' },
-  { value: 'unassigned', label: 'Unassigned', tone: 'warning' }
-];
+// Pinned above the pharmacist list in the Assigned To pill — replaces the old
+// separate All / Assigned / Unassigned segment.
+const ANY_ASSIGNED = { id: '__assigned', name: 'Any pharmacist' };
+const UNASSIGNED = { id: '__unassigned', name: 'Unassigned' };
+const ASSIGNMENT_QUICK_OPTIONS = [ANY_ASSIGNED, UNASSIGNED];
+
+function assignmentValue(f: PatientFilters) {
+  if (f.assignedUserId) return { id: f.assignedUserId, name: f.assignedUserName };
+  if (f.userAssignment === 'assigned') return ANY_ASSIGNED;
+  if (f.userAssignment === 'unassigned') return UNASSIGNED;
+  return null;
+}
 
 // The calendar itself covers "custom", so it isn't offered as a preset.
 const DATE_PRESETS = CREATED_RANGE_OPTIONS.filter((o) => o.value !== 'custom');
@@ -53,10 +60,20 @@ function toYmd(d: Date): string {
 export function PatientFiltersBar({ filters, onChange }: PatientFiltersBarProps) {
   const [businessUnits, setBusinessUnits] = useState<LookupOption[]>([]);
   const [pharmacyNames, setPharmacyNames] = useState<string[]>([]);
+  const [assignedUsers, setAssignedUsers] = useState<FilterSelectOption[]>([]);
+  const [assignedUsersLoading, setAssignedUsersLoading] = useState(true);
   const { region } = useRegion();
 
   useEffect(() => {
     getDistinctPharmacyNames().then(setPharmacyNames).catch((err) => console.error('Failed to load pharmacy names:', err));
+    getAssignedUsers()
+      .then((users) => setAssignedUsers(users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        hint: `${u.patientCount} patient${u.patientCount === 1 ? '' : 's'}`
+      }))))
+      .catch((err) => console.error('Failed to load assigned users:', err))
+      .finally(() => setAssignedUsersLoading(false));
   }, []);
 
   useEffect(() => {
@@ -78,34 +95,53 @@ export function PatientFiltersBar({ filters, onChange }: PatientFiltersBarProps)
   const rangeEnd = to ? toYmd(new Date(to.getFullYear(), to.getMonth(), to.getDate() - 1)) : null;
 
   const withRx = filters.prescriptions !== 'without';
+  const pharmacyOptions = pharmacyNames.map((name) => ({ id: name, name }));
 
   const activeCount = [
     filters.pharmacyName,
     filters.businessUnitId,
     filters.createdRange !== 'all',
-    filters.userAssignment !== 'all',
+    filters.userAssignment !== 'all' || filters.assignedUserId,
     filters.prescriptions !== EMPTY_FILTERS.prescriptions
   ].filter(Boolean).length;
 
   return (
     <div className="filters-panel registry-filters">
-      <div className="registry-filter-field">
-        <ComboBox
-          placeholder="Pharmacy"
-          value={filters.pharmacyName}
-          options={pharmacyNames}
-          onChange={(value) => onChange({ ...filters, pharmacyName: value })}
-        />
-      </div>
+      <FilterSelectPill
+        label="Pharmacy"
+        icon={faPrescriptionBottleMedical}
+        value={filters.pharmacyName ? { id: filters.pharmacyName, name: filters.pharmacyName } : null}
+        options={pharmacyOptions}
+        onChange={(opt) => onChange({ ...filters, pharmacyName: opt?.name ?? '' })}
+      />
 
-      <div className="registry-filter-field">
-        <LookupInput
-          placeholder="Business Unit"
-          initialValue={businessUnits.find((bu) => bu.id === filters.businessUnitId) ?? null}
-          options={businessUnits}
-          onSelect={(opt) => onChange({ ...filters, businessUnitId: opt?.id ?? '' })}
-        />
-      </div>
+      <FilterSelectPill
+        label="Business Unit"
+        icon={faBuilding}
+        value={businessUnits.find((bu) => bu.id === filters.businessUnitId) ?? null}
+        options={businessUnits}
+        onChange={(opt) => onChange({ ...filters, businessUnitId: opt?.id ?? '' })}
+      />
+
+      <FilterSelectPill
+        label="Assigned To"
+        icon={faUserNurse}
+        value={assignmentValue(filters)}
+        quickOptions={ASSIGNMENT_QUICK_OPTIONS}
+        options={assignedUsers}
+        optionsLoading={assignedUsersLoading}
+        showAvatar
+        searchPlaceholder="Search pharmacist name…"
+        onChange={(opt) => {
+          const isQuick = opt?.id === ANY_ASSIGNED.id || opt?.id === UNASSIGNED.id;
+          onChange({
+            ...filters,
+            userAssignment: opt?.id === ANY_ASSIGNED.id ? 'assigned' : opt?.id === UNASSIGNED.id ? 'unassigned' : 'all',
+            assignedUserId: opt && !isQuick ? opt.id : '',
+            assignedUserName: opt && !isQuick ? opt.name : ''
+          });
+        }}
+      />
 
       <DateRangePicker<CreatedRange>
         label="Created On"
@@ -117,14 +153,6 @@ export function PatientFiltersBar({ filters, onChange }: PatientFiltersBarProps)
         onPreset={(preset) => onChange({ ...filters, createdRange: preset, createdFrom: '', createdTo: '' })}
         onRange={(fromDay, toDay) => onChange({ ...filters, createdRange: 'custom', createdFrom: fromDay, createdTo: toDay })}
         onClear={() => onChange({ ...filters, createdRange: 'all', createdFrom: '', createdTo: '' })}
-      />
-
-      <SegmentedFilter<UserAssignment>
-        label="Assignment"
-        icon={faUserCheck}
-        value={filters.userAssignment}
-        options={ASSIGNMENT_OPTIONS}
-        onChange={(value) => onChange({ ...filters, userAssignment: value })}
       />
 
       {/* One toggle button: each click flips between patients with and

@@ -16,6 +16,8 @@ import { Pagination } from '../ui/Pagination';
 import { Toast } from '../ui/Toast';
 import { RefreshButton } from '../ui/RefreshButton';
 import { SortableTh } from '../ui/SortableTh';
+import { ExportExcelButton } from '../ui/ExportExcelButton';
+import type { XlsxColumn } from '../../domain/xlsx';
 import type { Patient } from '../../domain/types';
 import { formatDayMonth } from '../../domain/dates';
 import { searchUsers } from '../../api/usersApi';
@@ -28,8 +30,7 @@ import './RegistryPage.css';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleDateString();
 }
 
 function formatMoney(value: number | null): string {
@@ -44,6 +45,21 @@ function chronicClass(status: string | null): string {
   if (status === 'Inactive Chronic') return 'pill-muted';
   return 'pill-neutral';
 }
+
+const EXPORT_COLUMNS: XlsxColumn<Patient>[] = [
+  { header: 'Patient Name', value: (p) => p.name, width: 32 },
+  { header: 'OPD Visit', value: (p) => p.opdVisit, width: 16 },
+  { header: 'Business Unit', value: (p) => p.businessUnitName },
+  { header: 'Phone Number', value: (p) => p.phoneNumber, width: 16 },
+  { header: 'Prescriptions', value: (p) => p.noOfPrescriptions },
+  { header: 'Total Dispensing', value: (p) => p.totalDispensingValue, width: 16 },
+  { header: 'Order Date', value: (p) => (p.orderDay ? formatDayMonth(p.orderDay) : null) },
+  { header: 'Insurance Company', value: (p) => p.insuranceCompany, width: 24 },
+  { header: 'Pharmacy Name', value: (p) => p.pharmacyName, width: 24 },
+  { header: 'Chronic Status', value: (p) => p.chronicStatus, width: 16 },
+  { header: 'Assigned To', value: (p) => p.userName, width: 26 },
+  { header: 'Created On', value: (p) => (p.createdOn ? formatDate(p.createdOn) : null) }
+];
 
 function initials(name: string | null): string {
   if (!name) return '—';
@@ -64,6 +80,7 @@ export function PatientsPage() {
 
   const sortAccessors = useMemo<Record<string, SortAccessor<Patient>>>(() => ({
     name: (p) => p.name,
+    opdVisit: (p) => p.opdVisit,
     businessUnit: (p) => p.businessUnitName,
     phone: (p) => p.phoneNumber,
     prescriptions: (p) => p.noOfPrescriptions,
@@ -160,7 +177,7 @@ export function PatientsPage() {
               <h1 className="page-title">Patients</h1>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
             <div className="filter-input-wrap">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="filter-input-icon" aria-hidden="true" />
               <input
@@ -171,6 +188,7 @@ export function PatientsPage() {
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               />
             </div>
+            <ExportExcelButton fileName="patients" sheetName="Patients" columns={EXPORT_COLUMNS} rows={sortedPatients} />
             <RefreshButton onRefresh={refresh} />
           </div>
         </div>
@@ -219,6 +237,7 @@ export function PatientsPage() {
                     />
                   </th>
                   <SortableTh label="Patient Name" sortKey="name" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh label="OPD Visit" sortKey="opdVisit" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Business Unit" sortKey="businessUnit" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Phone Number" sortKey="phone" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Prescriptions" sortKey="prescriptions" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
@@ -234,7 +253,7 @@ export function PatientsPage() {
               <tbody>
                 {pagePatients.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="grid-empty-row">No data matching the current filter.</td>
+                    <td colSpan={13} className="grid-empty-row">No data matching the current filter.</td>
                   </tr>
                 )}
                 {pagePatients.map((p) => (
@@ -257,6 +276,7 @@ export function PatientsPage() {
                         <span className="cell-link">{p.name}</span>
                       </div>
                     </td>
+                    <td className="mono">{p.opdVisit ?? '—'}</td>
                     <td>{p.businessUnitName ? <span className="bu-badge">{p.businessUnitName}</span> : '—'}</td>
                     <td className="mono">{p.phoneNumber}</td>
                     <td className="mono">{p.noOfPrescriptions !== null ? <span className="count-badge">{p.noOfPrescriptions}</span> : '—'}</td>

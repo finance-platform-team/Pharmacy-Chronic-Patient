@@ -21,6 +21,10 @@ export interface PatientFilters {
   search: string;
   businessUnitId: string;
   userAssignment: UserAssignment;
+  /** One specific assigned user (cr18c_user) — '' for any. Takes precedence over userAssignment. */
+  assignedUserId: string;
+  /** Display name for assignedUserId, so the picker can show who's selected. */
+  assignedUserName: string;
   pharmacyName: string;
   prescriptions: PrescriptionPresence;
   createdRange: CreatedRange;
@@ -34,6 +38,8 @@ export const EMPTY_FILTERS: PatientFilters = {
   search: '',
   businessUnitId: '',
   userAssignment: 'all',
+  assignedUserId: '',
+  assignedUserName: '',
   pharmacyName: '',
   prescriptions: 'with',
   createdRange: 'all',
@@ -97,7 +103,9 @@ export function buildPatientFilter(f: PatientFilters): string {
     parts.push(`contains(chp_pharmacyname,'${escaped}')`);
   }
 
-  if (f.userAssignment === 'unassigned') {
+  if (f.assignedUserId) {
+    parts.push(`_cr18c_user_value eq ${f.assignedUserId}`);
+  } else if (f.userAssignment === 'unassigned') {
     parts.push('_cr18c_user_value eq null');
   } else if (f.userAssignment === 'assigned') {
     parts.push('_cr18c_user_value ne null');

@@ -31,7 +31,8 @@ export const Businessunitscr603_application_tag = {
   989230003: 'EGY Medical Audit',
   780290001: 'DTM',
   999740008: 'Services Hub',
-  989230004: 'Planning System'
+  989230004: 'Planning System',
+  989230005: 'Leadership Practice'
 } as const;
 export type Businessunitscr603_application_tag = keyof typeof Businessunitscr603_application_tag;
 
@@ -83,9 +84,13 @@ export interface BusinessunitsBase {
   costcenter?: string;
   cr18c_lasthrid?: string;
   "cr18c_OVRFinanceTeam@odata.bind"?: string;
+  "cr4be_FinanceTeam@odata.bind"?: string;
+  "cr4be_OfferDentalApproval@odata.bind"?: string;
+  "cr4be_OfferMedicalApproval@odata.bind"?: string;
   cr4f8_tag?: string;
   "cr603_AdministrationTeam@odata.bind"?: string;
   cr603_application_tag?: Businessunitscr603_application_tag[];
+  "cr603_BiomedicalTeam@odata.bind"?: string;
   "cr603_HRTeam@odata.bind"?: string;
   "cr603_InternalAuditTeam@odata.bind"?: string;
   "cr603_ITTeam@odata.bind"?: string;
@@ -98,6 +103,8 @@ export interface BusinessunitsBase {
   "crad2_InpatientPharmacy@odata.bind"?: string;
   "crad2_Nursing@odata.bind"?: string;
   "crad2_OutpatientPharmacy@odata.bind"?: string;
+  "crd04_BriefProvider@odata.bind"?: string;
+  crd04_medicalbriefprovider?: string;
   creditlimit?: number;
   description?: string;
   divisionname?: string;
@@ -113,11 +120,15 @@ export interface BusinessunitsBase {
   inheritancemask?: number;
   isdisabled: boolean;
   name: string;
+  "new_AndalusiaOffersAccountManagersTeam@odata.bind"?: string;
+  "new_OfferOperationTeam@odata.bind"?: string;
   "new_PricingTeam@odata.bind"?: string;
   "new_PricingUser@odata.bind"?: string;
   overriddencreatedon?: string;
   "ParentBusinessUnitId@odata.bind"?: string;
   picture?: string;
+  pm_isplanningbu?: boolean;
+  pm_sequence?: number;
   stockexchange?: string;
   tickersymbol?: string;
   "TransactionCurrencyId@odata.bind"?: string;
@@ -133,9 +144,17 @@ export interface Businessunits extends BusinessunitsBase {
   address2_shippingmethodcodename?: string;
   cr18c_ovrfinanceteamname?: string;
   cr18c_ovrfinanceteamyominame?: string;
+  cr4be_financeteamname?: string;
+  cr4be_financeteamyominame?: string;
+  cr4be_offerdentalapprovalname?: string;
+  cr4be_offerdentalapprovalyominame?: string;
+  cr4be_offermedicalapprovalname?: string;
+  cr4be_offermedicalapprovalyominame?: string;
   cr603_administrationteamname?: string;
   cr603_administrationteamyominame?: string;
   cr603_application_tagname?: string;
+  cr603_biomedicalteamname?: string;
+  cr603_biomedicalteamyominame?: string;
   cr603_hrteamname?: string;
   cr603_hrteamyominame?: string;
   cr603_internalauditteamname?: string;
@@ -159,6 +178,8 @@ export interface Businessunits extends BusinessunitsBase {
   crad2_nursingyominame?: string;
   crad2_outpatientpharmacyname?: string;
   crad2_outpatientpharmacyyominame?: string;
+  crd04_briefprovidername?: string;
+  crd04_briefprovideryominame?: string;
   createdbyname?: string;
   createdbyyominame?: string;
   createdon?: string;
@@ -176,12 +197,17 @@ export interface Businessunits extends BusinessunitsBase {
   modifiedon?: string;
   modifiedonbehalfbyname?: string;
   modifiedonbehalfbyyominame?: string;
+  new_andalusiaoffersaccountmanagersteamname?: string;
+  new_andalusiaoffersaccountmanagersteamyominame?: string;
+  new_offeroperationteamname?: string;
+  new_offeroperationteamyominame?: string;
   new_pricingteamname?: string;
   new_pricingteamyominame?: string;
   new_pricingusername?: string;
   new_pricinguseryominame?: string;
   organizationidname: string;
   parentbusinessunitidname: string;
+  pm_isplanningbuname?: string;
   transactioncurrencyidname?: string;
   usergroupid?: string;
   versionnumber?: number;
@@ -190,8 +216,16 @@ export interface Businessunits extends BusinessunitsBase {
   _calendarid_value?: string;
   cr18c_ovrfinanceteam?: object;
   _cr18c_ovrfinanceteam_value?: string;
+  cr4be_financeteam?: object;
+  _cr4be_financeteam_value?: string;
+  cr4be_offerdentalapproval?: object;
+  _cr4be_offerdentalapproval_value?: string;
+  cr4be_offermedicalapproval?: object;
+  _cr4be_offermedicalapproval_value?: string;
   cr603_administrationteam?: object;
   _cr603_administrationteam_value?: string;
+  cr603_biomedicalteam?: object;
+  _cr603_biomedicalteam_value?: string;
   cr603_hrteam?: object;
   _cr603_hrteam_value?: string;
   cr603_internalauditteam?: object;
@@ -216,6 +250,8 @@ export interface Businessunits extends BusinessunitsBase {
   _crad2_nursing_value?: string;
   crad2_outpatientpharmacy?: object;
   _crad2_outpatientpharmacy_value?: string;
+  crd04_briefprovider?: object;
+  _crd04_briefprovider_value?: string;
   createdby?: object;
   _createdby_value?: string;
   createdonbehalfby?: object;
@@ -228,6 +264,10 @@ export interface Businessunits extends BusinessunitsBase {
   _modifiedby_value?: string;
   modifiedonbehalfby?: object;
   _modifiedonbehalfby_value?: string;
+  new_andalusiaoffersaccountmanagersteam?: object;
+  _new_andalusiaoffersaccountmanagersteam_value?: string;
+  new_offeroperationteam?: object;
+  _new_offeroperationteam_value?: string;
   new_pricingteam?: object;
   _new_pricingteam_value?: string;
   new_pricinguser?: object;

@@ -42,6 +42,7 @@ export interface Cr18c_prescriptionsBase {
   chp_calledstatus?: Cr18c_prescriptionschp_calledstatus;
   chp_chronicstatus?: Cr18c_prescriptionschp_chronicstatus;
   chp_copydispensedvalue?: number;
+  chp_doctorvisitid?: string;
   chp_eligibility?: Cr18c_prescriptionschp_eligibility;
   chp_patientid?: string;
   chp_patientname?: string;
@@ -77,6 +78,7 @@ export interface Cr18c_prescriptions extends Cr18c_prescriptionsBase {
   chp_dispensedvalue_date?: string;
   chp_dispensedvalue_state?: number;
   chp_eligibilityname?: string;
+  chp_insurancecompany?: string;
   cr18c_dispensedname?: string;
   cr18c_orderday1?: number;
   cr18c_patientname?: string;

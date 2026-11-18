@@ -31,6 +31,7 @@ export interface Cr18c_patientsBase {
   chp_id?: string;
   chp_insurancecompany?: string;
   chp_pharmacyname?: string;
+  chp_doctorvisitid?: string;
   chp_visitid?: string;
   "cr18c_BusinessUnit@odata.bind": string;
   cr18c_lastdispensedvalue?: number;

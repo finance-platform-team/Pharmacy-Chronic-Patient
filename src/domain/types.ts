@@ -8,6 +8,8 @@ export interface Patient {
 
   insuranceCompany: string | null;
   pharmacyName: string | null;
+  /** chp_doctorvisitid — shown as "OPD Visit". */
+  opdVisit: string | null;
 
   userId: string | null;
   userName: string | null;
@@ -52,6 +54,8 @@ export interface ProductSummary {
 export interface PrescriptionRow {
   id: string;
   name: string;
+  /** cr18c_pid — "Pharmacy Visit ID" in Dataverse. */
+  pharmacyVisitId: string | null;
   patientId: string | null;
   patientName: string | null;
   patientMobile: string | null;

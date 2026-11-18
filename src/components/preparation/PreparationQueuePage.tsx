@@ -2,36 +2,34 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList, faMagnifyingGlass, faArrowDownWideShort, faCircleCheck,
-  faPlay, faCheck, faFlagCheckered, faBox, faHouse, faClock
+  faPhone, faTruckFast, faFlagCheckered, faBox, faHouse, faClock, faPills
 } from '@fortawesome/free-solid-svg-icons';
-import { getAllPreparationTasks, updatePreparationStatus, setPreparationStartTime, markTaskFulfilled, type PreparationTask } from '../../api/preparationApi';
+import { getAllPreparationTasks, updatePreparationStatus, setPreparationStartTime, type PreparationTask } from '../../api/preparationApi';
 import { RefreshButton } from '../ui/RefreshButton';
+import { ExportExcelButton } from '../ui/ExportExcelButton';
+import type { XlsxColumn } from '../../domain/xlsx';
 import { useSort, type SortAccessor } from '../../hooks/useSort';
 import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 import { SortableTh } from '../ui/SortableTh';
 import { useRegion } from '../../context/RegionContext';
+import { useToast } from '../../hooks/useToast';
+import { Toast } from '../ui/Toast';
+import { PrepVisitModal } from './PrepVisitModal';
+import { loadPrepVisitDetails, type PrepVisitDetails } from '../../api/prepVisitApi';
 import { recordMatchesRegion } from '../../api/businessUnitsApi';
+import {
+  PREP_STATUS_CALLED, PREP_STATUS_FULFILLED,
+  nextStage, stageIndex, stageLabel, stageOf, type PrepStage
+} from '../../domain/prepStages';
 import '../patients/PatientsPage.css';
 import './PreparationQueuePage.css';
 
-const PREP_STATUS_PENDING = '766990000';
-const PREP_STATUS_UNDER_PREP = '766990001';
-const PREP_STATUS_READY_PICKUP = '766990002';
-const PREP_STATUS_READY_DELIVERY = '766990003';
-const TASK_STATUS_COMPLETED = '766990002';
-
-const PREP_STATUS_LABELS: Record<string, string> = {
-  [PREP_STATUS_PENDING]: 'Confirmed – Pending Preparation',
-  [PREP_STATUS_UNDER_PREP]: 'Under Preparation',
-  [PREP_STATUS_READY_PICKUP]: 'Ready for Pickup',
-  [PREP_STATUS_READY_DELIVERY]: 'Ready for Delivery'
-};
-
-const URGENCY_RANK: Record<string, number> = {
-  [PREP_STATUS_PENDING]: 0,
-  [PREP_STATUS_UNDER_PREP]: 1,
-  [PREP_STATUS_READY_PICKUP]: 2,
-  [PREP_STATUS_READY_DELIVERY]: 2
+const URGENCY_RANK: Record<PrepStage, number> = {
+  none: 0,
+  called: 1,
+  recorded: 2,
+  ready: 3,
+  fulfilled: 4
 };
 
 // Elapsed-time-up display for the live Prep SLA timer: minutes while under an
@@ -48,7 +46,7 @@ function formatElapsed(ms: number): string {
 }
 
 const SORT_COLUMN_LABELS: Record<string, string> = {
-  cycleId: 'Cycle ID',
+  pharmacyVisitId: 'Pharmacy Visit ID',
   patient: 'Patient',
   opdVisit: 'OPD Visit',
   bu: 'BU',
@@ -58,7 +56,24 @@ const SORT_COLUMN_LABELS: Record<string, string> = {
   pharmacist: 'Pharmacist'
 };
 
-type PrepCardFilter = 'all' | 'needs' | 'under' | 'ready';
+type PrepCardFilter = 'all' | 'called' | 'recorded' | 'ready';
+
+function formatExportDateTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+const EXPORT_COLUMNS: XlsxColumn<PreparationTask>[] = [
+  { header: 'Pharmacy Visit ID', value: (t) => t.pharmacyVisitId, width: 18 },
+  { header: 'Patient', value: (t) => t.patient, width: 32 },
+  { header: 'OPD Visit', value: (t) => t.opdVisit, width: 16 },
+  { header: 'BU', value: (t) => t.bu },
+  { header: 'Fulfilment Path', value: (t) => t.fulfilmentPath, width: 16 },
+  { header: 'Prep Status', value: (t) => stageLabel(t.prepStatus), width: 30 },
+  { header: 'Prep SLA Start', value: (t) => formatExportDateTime(t.preparationSla), width: 20 },
+  { header: 'Pharmacist', value: (t) => t.pharmacist, width: 26 }
+];
 
 function initials(name: string | null): string {
   if (!name) return '—';
@@ -80,6 +95,9 @@ export function PreparationQueuePage() {
   const [saveError, setSaveError] = useState<{ id: string; message: string } | null>(null);
   const [now, setNow] = useState<number>(Date.now());
   const { region } = useRegion();
+  const [visitPopup, setVisitPopup] = useState<{ taskId: string; details: PrepVisitDetails } | null>(null);
+  const [openingVisitId, setOpeningVisitId] = useState<string | null>(null);
+  const { toast, showToast } = useToast();
 
   // Re-filtered reactively on every region switch — no refetch needed.
   const regionTasks = useMemo(
@@ -87,18 +105,14 @@ export function PreparationQueuePage() {
     [tasks, region]
   );
 
-  // "Open Cycles" is the active queue; "Fulfilled" is where a cycle goes once its
-  // Action button is clicked through to completion — nothing just disappears.
-  // (Not part of ref.html's mockup, kept from an earlier explicit request so
-  // fulfilled cycles stay reachable instead of vanishing with no trace.)
+  // "Open Cycles" is the active queue; "Fulfilled" holds cycles that reached
+  // Fulfilled — nothing just disappears.
   const openTasks = useMemo(
-    // chp_willdispense is a formula column (Task Status = Completed), so every
-    // Will Dispense = Yes task is already Completed — no extra status check here.
-    () => regionTasks.filter((task) => task.willDispense === true),
+    () => regionTasks.filter((task) => task.prepStatus !== PREP_STATUS_FULFILLED),
     [regionTasks]
   );
   const fulfilledTasks = useMemo(
-    () => regionTasks.filter((task) => task.willDispense === true && task.taskStatus === TASK_STATUS_COMPLETED),
+    () => regionTasks.filter((task) => task.prepStatus === PREP_STATUS_FULFILLED),
     [regionTasks]
   );
   const visibleTasks = viewMode === 'open' ? openTasks : fulfilledTasks;
@@ -106,13 +120,14 @@ export function PreparationQueuePage() {
   // Stat cards always summarize the open queue, regardless of which tab is active —
   // a pinned dashboard summary rather than a view of the current tab's contents.
   const stats = useMemo(() => {
-    let needsAction = 0, underPrep = 0, ready = 0;
+    let called = 0, recorded = 0, ready = 0;
     openTasks.forEach((task) => {
-      if (task.prepStatus === PREP_STATUS_PENDING) needsAction++;
-      else if (task.prepStatus === PREP_STATUS_UNDER_PREP) underPrep++;
-      else if (task.prepStatus === PREP_STATUS_READY_PICKUP || task.prepStatus === PREP_STATUS_READY_DELIVERY) ready++;
+      const stage = stageOf(task.prepStatus);
+      if (stage === 'called') called++;
+      else if (stage === 'recorded') recorded++;
+      else if (stage === 'ready') ready++;
     });
-    return { needsAction, underPrep, ready, total: openTasks.length };
+    return { called, recorded, ready, total: openTasks.length };
   }, [openTasks]);
 
   // Stat-card filter. Cards summarize the open queue, so picking one also
@@ -125,11 +140,7 @@ export function PreparationQueuePage() {
   const filteredTasks = useMemo(() => {
     let result = visibleTasks;
     if (viewMode === 'open' && prepFilter !== 'all') {
-      result = result.filter((task) =>
-        prepFilter === 'needs' ? task.prepStatus === PREP_STATUS_PENDING
-          : prepFilter === 'under' ? task.prepStatus === PREP_STATUS_UNDER_PREP
-            : task.prepStatus === PREP_STATUS_READY_PICKUP || task.prepStatus === PREP_STATUS_READY_DELIVERY
-      );
+      result = result.filter((task) => stageOf(task.prepStatus) === prepFilter);
     }
     if (fulfilmentFilter !== 'all') {
       result = result.filter((task) => task.fulfilmentPath === fulfilmentFilter);
@@ -139,15 +150,15 @@ export function PreparationQueuePage() {
       result = result.filter((task) =>
         (task.patient ?? '').toLowerCase().includes(q)
         || (task.opdVisit ?? '').toLowerCase().includes(q)
-        || (task.chpId ?? '').toLowerCase().includes(q)
+        || (task.pharmacyVisitId ?? '').toLowerCase().includes(q)
       );
     }
     return result;
   }, [visibleTasks, viewMode, prepFilter, fulfilmentFilter, search]);
 
-  // Open Cycles: fixed urgency ordering (needs action first, then under prep, then
-  // ready; ties broken by how long a cycle has sat in its current stage) rather than
-  // user-selectable column sorting. Fulfilled: most recently closed out first.
+  // Open Cycles: fixed urgency ordering (not started first, then each later
+  // stage; ties broken by how long a cycle has been running) rather than
+  // user-selectable column sorting. Fulfilled: most recently fulfilled first.
   // This stays the default/fallback order — clicking a column header (below)
   // overrides it, and clicking a third time clears back to this same order.
   const defaultOrderedTasks = useMemo(() => {
@@ -159,7 +170,7 @@ export function PreparationQueuePage() {
       });
     }
     return [...filteredTasks].sort((a, b) => {
-      const rankDiff = (URGENCY_RANK[a.prepStatus ?? ''] ?? 3) - (URGENCY_RANK[b.prepStatus ?? ''] ?? 3);
+      const rankDiff = URGENCY_RANK[stageOf(a.prepStatus)] - URGENCY_RANK[stageOf(b.prepStatus)];
       if (rankDiff !== 0) return rankDiff;
       const aStart = a.preparationSla ? Date.parse(a.preparationSla) : Infinity;
       const bStart = b.preparationSla ? Date.parse(b.preparationSla) : Infinity;
@@ -168,32 +179,18 @@ export function PreparationQueuePage() {
   }, [filteredTasks, viewMode]);
 
   const sortAccessors = useMemo<Record<string, SortAccessor<PreparationTask>>>(() => ({
-    cycleId: (t) => t.chpId,
+    pharmacyVisitId: (t) => t.pharmacyVisitId,
     patient: (t) => t.patient,
     opdVisit: (t) => t.opdVisit,
     bu: (t) => t.bu,
     fulfilmentPath: (t) => t.fulfilmentPath,
-    prepStatus: (t) => URGENCY_RANK[t.prepStatus ?? ''] ?? 3,
+    prepStatus: (t) => URGENCY_RANK[stageOf(t.prepStatus)],
     prepSla: (t) => (t.preparationSla ? Date.parse(t.preparationSla) : null),
     pharmacist: (t) => t.pharmacist
   }), []);
   const { sorted: sortedTasks, sortKey, sortDir, toggleSort } = useSort(defaultOrderedTasks, sortAccessors);
 
   const currentTabTotal = viewMode === 'open' ? openTasks.length : fulfilledTasks.length;
-
-  const statusStage = (status: string | null): 'pending' | 'underprep' | 'ready' | 'other' => {
-    if (status === PREP_STATUS_PENDING) return 'pending';
-    if (status === PREP_STATUS_UNDER_PREP) return 'underprep';
-    if (status === PREP_STATUS_READY_PICKUP || status === PREP_STATUS_READY_DELIVERY) return 'ready';
-    return 'other';
-  };
-
-  const stageProgress = (stage: ReturnType<typeof statusStage>) => {
-    if (stage === 'pending') return 1;
-    if (stage === 'underprep') return 2;
-    if (stage === 'ready') return 4;
-    return 0;
-  };
 
   // Keyed off the task's current state alone — not "did we observe it flip to
   // Yes mid-poll" — so a cycle that already has willDispense = Yes the moment
@@ -202,7 +199,8 @@ export function PreparationQueuePage() {
   const shouldStartTask = (task: PreparationTask) => {
     if (!task.willDispense) return false;
     if (task.preparationSla) return false;
-    if (statusStage(task.prepStatus) === 'ready') return false;
+    const stage = stageOf(task.prepStatus);
+    if (stage === 'ready' || stage === 'fulfilled') return false;
     return true;
   };
 
@@ -273,73 +271,73 @@ export function PreparationQueuePage() {
     setTasks(started ? await getAllPreparationTasks() : latest);
   }, { paused: savingId !== null });
 
-  async function saveStatus(taskId: string, value: string) {
+  // Moves a cycle to another preparation stage. Marking it Called starts the
+  // Prep SLA clock if it hasn't started yet. Throws so the popup can show the
+  // error in place; the table's own buttons catch it below.
+  async function changeStage(taskId: string, status: string): Promise<void> {
     const task = tasks.find((item) => item.id === taskId);
     if (!task) return;
 
-    setSavingId(taskId);
-    setSaveError(null);
-
     const previousTasks = tasks.map((t) => ({ ...t }));
     setTasks((current) => current.map((t) =>
-      t.id === taskId ? { ...t, prepStatus: value, prepStatusLabel: PREP_STATUS_LABELS[value] ?? null } : t
+      t.id === taskId ? { ...t, prepStatus: status, prepStatusLabel: stageLabel(status) } : t
     ));
 
-    const isCompletion = value === PREP_STATUS_READY_PICKUP || value === PREP_STATUS_READY_DELIVERY;
-    const shouldSetStartTime = task.willDispense === true && !task.preparationSla && !isCompletion;
-
     try {
-      if (shouldSetStartTime) {
+      if (status === PREP_STATUS_CALLED && !task.preparationSla) {
         await setPreparationStartTime(taskId);
       }
-      await updatePreparationStatus(taskId, value, false);
+      await updatePreparationStatus(taskId, status, false);
     } catch (err) {
       setTasks(previousTasks);
-      setSaveError({ id: taskId, message: err instanceof Error ? err.message : 'Failed to save status' });
-    } finally {
-      setSavingId(null);
+      throw err;
     }
   }
 
-  async function handleFulfil(taskId: string) {
-    setSavingId(taskId);
+  async function advanceFromTable(task: PreparationTask, status: string) {
+    setSavingId(task.id);
     setSaveError(null);
-
-    const previousTasks = tasks.map((t) => ({ ...t }));
-    setTasks((current) => current.map((t) =>
-      t.id === taskId ? { ...t, taskStatus: TASK_STATUS_COMPLETED, taskStatusLabel: 'Completed' } : t
-    ));
-
     try {
-      await markTaskFulfilled(taskId);
+      await changeStage(task.id, status);
     } catch (err) {
-      setTasks(previousTasks);
-      setSaveError({ id: taskId, message: err instanceof Error ? err.message : 'Failed to fulfil cycle' });
+      setSaveError({ id: task.id, message: err instanceof Error ? err.message : 'Failed to update stage' });
     } finally {
       setSavingId(null);
     }
   }
 
-  // ref.html's "pipeline" stepper: stage label stacked above a 4-segment track.
-  // Segments already passed = done (green); the segment currently being worked
-  // through = the stage's own color (red for pending, gold for under prep);
-  // segments not reached yet stay empty. Ready (Pickup or Delivery — identical
-  // by design) fills all 4 as done.
+  // The popup is opened from the Pharmacy Visit ID (or the patient name) and is
+  // only shown once the patient behind that visit could actually be loaded.
+  async function openVisitPopup(task: PreparationTask) {
+    if (!task.pharmacyVisitId) return;
+    setOpeningVisitId(task.id);
+    try {
+      const details = await loadPrepVisitDetails(task.pharmacyVisitId);
+      setVisitPopup({ taskId: task.id, details });
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to load patient information', 'error');
+    } finally {
+      setOpeningVisitId(null);
+    }
+  }
+
+  const popupTask = visitPopup ? tasks.find((t) => t.id === visitPopup.taskId) ?? null : null;
+
+  // 4-segment pipeline under the stage label: one segment per preparation step
+  // reached. The step currently being worked on keeps the stage's own color.
   function renderStatusCell(task: PreparationTask) {
-    const stage = statusStage(task.prepStatus);
-    const label = task.prepStatusLabel ?? PREP_STATUS_LABELS[task.prepStatus ?? ''] ?? task.prepStatus ?? '—';
-    const filled = stageProgress(stage);
-    const currentSegClass = stage === 'pending' ? 'current alert-seg' : stage === 'underprep' ? 'current gold-seg' : '';
+    const stage = stageOf(task.prepStatus);
+    const filled = stageIndex(stage);
 
     return (
       <td>
         <div className={`pipeline status-${stage}`}>
-          <span className="stage-label">{label}</span>
+          <span className="stage-label">{stageLabel(task.prepStatus)}</span>
           <div className="track">
             {[0, 1, 2, 3].map((i) => {
               let segClass = 'seg';
               if (i < filled) {
-                segClass += i === filled - 1 && stage !== 'ready' ? ` ${currentSegClass}` : ' done';
+                segClass += i === filled - 1 && stage !== 'fulfilled' ? ' current' : ' done';
               }
               return <div key={i} className={segClass} />;
             })}
@@ -349,15 +347,14 @@ export function PreparationQueuePage() {
     );
   }
 
-  // Live elapsed-time-up timer: starts counting the moment willDispense = Yes
-  // (task.preparationSla gets set), ticks every 15s off the shared `now`
-  // clock while pending/under prep, then freezes at Ready. There's no
-  // dedicated "became ready at" field in Dataverse, so modifiedOn is used as
-  // that freeze point (assumption: nothing else touches the record between
-  // the status flip and the next poll) — flagged here since it's not a real
-  // "ready at" timestamp field.
+  // Live elapsed-time-up timer: starts counting once the cycle's SLA start is
+  // set, ticks every 15s off the shared `now` clock while in progress, then
+  // freezes once the medications are ready. There's no dedicated "became ready
+  // at" field in Dataverse, so modifiedOn is used as that freeze point
+  // (assumption: nothing else touches the record between the status flip and
+  // the next poll) — flagged here since it's not a real "ready at" timestamp field.
   function renderSlaCell(task: PreparationTask) {
-    const stage = statusStage(task.prepStatus);
+    const stage = stageOf(task.prepStatus);
 
     if (!task.preparationSla) {
       return <span className="sla none">—</span>;
@@ -366,7 +363,7 @@ export function PreparationQueuePage() {
     const start = Date.parse(task.preparationSla);
     if (Number.isNaN(start)) return <span className="sla none">—</span>;
 
-    if (stage === 'ready') {
+    if (stage === 'ready' || stage === 'fulfilled') {
       const modifiedAt = task.modifiedOn ? Date.parse(task.modifiedOn) : NaN;
       const end = !Number.isNaN(modifiedAt) && modifiedAt > start ? modifiedAt : start;
       return (
@@ -377,47 +374,40 @@ export function PreparationQueuePage() {
       );
     }
 
-    if (stage === 'pending' || stage === 'underprep') {
-      return (
-        <span className="sla running">
-          <FontAwesomeIcon icon={faClock} aria-hidden="true" />
-          {formatElapsed(Math.max(0, now - start))}
-        </span>
-      );
-    }
-
-    return <span className="sla none">—</span>;
+    return (
+      <span className="sla running">
+        <FontAwesomeIcon icon={faClock} aria-hidden="true" />
+        {formatElapsed(Math.max(0, now - start))}
+      </span>
+    );
   }
 
   function renderActionCell(task: PreparationTask) {
     const isSaving = savingId === task.id;
     const rowError = saveError?.id === task.id ? saveError.message : null;
-    const stage = statusStage(task.prepStatus);
+    const stage = stageOf(task.prepStatus);
+    const next = nextStage(task.prepStatus, task.fulfilmentPath);
 
     let button: ReactNode;
-    if (task.taskStatus === TASK_STATUS_COMPLETED) {
+    if (stage === 'fulfilled' || !next) {
       button = (
         <span className="fulfilled-pill">
           <FontAwesomeIcon icon={faCircleCheck} aria-hidden="true" /> Fulfilled
         </span>
       );
-    } else if (stage === 'pending') {
+    } else if (stage === 'called') {
+      // Medication Recorded is reached by saving the medications in the popup.
       button = (
-        <button type="button" className="btn btn-primary btn-sm" disabled={isSaving} onClick={() => saveStatus(task.id, PREP_STATUS_UNDER_PREP)}>
-          {isSaving ? 'Starting…' : (<><FontAwesomeIcon icon={faPlay} aria-hidden="true" /> Start Preparation</>)}
-        </button>
-      );
-    } else if (stage === 'underprep') {
-      const target = task.fulfilmentPath === 'Home Delivery' ? PREP_STATUS_READY_DELIVERY : PREP_STATUS_READY_PICKUP;
-      button = (
-        <button type="button" className="btn btn-success btn-sm" disabled={isSaving} onClick={() => saveStatus(task.id, target)}>
-          {isSaving ? 'Marking ready…' : (<><FontAwesomeIcon icon={faCheck} aria-hidden="true" /> Mark Ready</>)}
+        <button type="button" className="btn btn-primary btn-sm" disabled={!task.pharmacyVisitId || openingVisitId === task.id} onClick={() => openVisitPopup(task)}>
+          <FontAwesomeIcon icon={faPills} aria-hidden="true" /> {openingVisitId === task.id ? 'Opening…' : 'Record Medication'}
         </button>
       );
     } else {
+      const icon = stage === 'none' ? faPhone : stage === 'recorded' ? faTruckFast : faFlagCheckered;
+      const style = stage === 'ready' ? 'btn-outline' : stage === 'recorded' ? 'btn-success' : 'btn-primary';
       button = (
-        <button type="button" className="btn btn-outline btn-sm" disabled={isSaving} onClick={() => handleFulfil(task.id)}>
-          {isSaving ? 'Fulfilling…' : (<><FontAwesomeIcon icon={faFlagCheckered} aria-hidden="true" /> Fulfil</>)}
+        <button type="button" className={`btn ${style} btn-sm`} disabled={isSaving} onClick={() => advanceFromTable(task, next.status)}>
+          {isSaving ? 'Saving…' : (<><FontAwesomeIcon icon={icon} aria-hidden="true" /> {next.label}</>)}
         </button>
       );
     }
@@ -432,6 +422,16 @@ export function PreparationQueuePage() {
 
   return (
     <div className="app-shell preparation-queue-page">
+      {toast && <Toast message={toast.message} tone={toast.tone} />}
+      {visitPopup && popupTask && (
+        <PrepVisitModal
+          task={popupTask}
+          details={visitPopup.details}
+          onClose={() => setVisitPopup(null)}
+          onNotesSaved={(notes) => setTasks((current) => current.map((t) => (t.id === popupTask.id ? { ...t, notes } : t)))}
+          onStageChange={(status) => changeStage(popupTask.id, status)}
+        />
+      )}
       <div className="page-header page-panel">
         <div className="page-header-row">
           <div className="page-title-grp">
@@ -446,6 +446,12 @@ export function PreparationQueuePage() {
             <button type="button" className={`segmented-toggle-btn ${viewMode === 'fulfilled' ? 'active' : ''}`} onClick={() => setViewMode('fulfilled')}>Fulfilled</button>
           </div>
           <div className="toolbar-summary">
+            <ExportExcelButton
+              fileName={viewMode === 'fulfilled' ? 'prep-queue-fulfilled' : 'prep-queue-open'}
+              sheetName={viewMode === 'fulfilled' ? 'Prep Queue - Fulfilled' : 'Prep Queue - Open'}
+              columns={EXPORT_COLUMNS}
+              rows={sortedTasks}
+            />
             <RefreshButton onRefresh={refresh} />
           </div>
         </div>
@@ -453,18 +459,18 @@ export function PreparationQueuePage() {
 
       <div className="stat-row">
         {/* Each card filters the open queue by its stage; clicking the active card clears it. */}
-        <button type="button" className={`stat-card stat-card-btn sc-alert${prepFilter === 'needs' ? ' is-active' : ''}`} aria-pressed={prepFilter === 'needs'} onClick={() => pickPrepFilter('needs')}>
-          <div className="stat-lbl">Needs Action &lt; 1h</div>
-          <div className="stat-val">{stats.needsAction}</div>
-          <div className="stat-meta">Confirmed, not started</div>
+        <button type="button" className={`stat-card stat-card-btn sc-alert${prepFilter === 'called' ? ' is-active' : ''}`} aria-pressed={prepFilter === 'called'} onClick={() => pickPrepFilter('called')}>
+          <div className="stat-lbl">Called</div>
+          <div className="stat-val">{stats.called}</div>
+          <div className="stat-meta">Medications not recorded yet</div>
         </button>
-        <button type="button" className={`stat-card stat-card-btn sc-gold${prepFilter === 'under' ? ' is-active' : ''}`} aria-pressed={prepFilter === 'under'} onClick={() => pickPrepFilter('under')}>
-          <div className="stat-lbl">Under Preparation</div>
-          <div className="stat-val">{stats.underPrep}</div>
-          <div className="stat-meta">In progress</div>
+        <button type="button" className={`stat-card stat-card-btn sc-gold${prepFilter === 'recorded' ? ' is-active' : ''}`} aria-pressed={prepFilter === 'recorded'} onClick={() => pickPrepFilter('recorded')}>
+          <div className="stat-lbl">Medication Recorded</div>
+          <div className="stat-val">{stats.recorded}</div>
+          <div className="stat-meta">Being prepared</div>
         </button>
         <button type="button" className={`stat-card stat-card-btn sc-green${prepFilter === 'ready' ? ' is-active' : ''}`} aria-pressed={prepFilter === 'ready'} onClick={() => pickPrepFilter('ready')}>
-          <div className="stat-lbl">Ready for Handoff</div>
+          <div className="stat-lbl">Ready</div>
           <div className="stat-val">{stats.ready}</div>
           <div className="stat-meta">Pickup + delivery</div>
         </button>
@@ -480,7 +486,7 @@ export function PreparationQueuePage() {
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
           <input
             type="text"
-            placeholder="Search patient, OPD visit, or cycle…"
+            placeholder="Search patient, OPD visit, or pharmacy visit…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -496,7 +502,7 @@ export function PreparationQueuePage() {
           <FontAwesomeIcon icon={faArrowDownWideShort} aria-hidden="true" />
           {sortKey
             ? `Sorted by ${SORT_COLUMN_LABELS[sortKey] ?? sortKey} (${sortDir === 'asc' ? 'ascending' : 'descending'})`
-            : (viewMode === 'fulfilled' ? 'Sorted by most recently fulfilled' : 'Sorted by urgency')}
+            : (viewMode === 'fulfilled' ? 'Sorted by most recently fulfilled' : 'Sorted by stage')}
         </div>
       </div>
 
@@ -510,7 +516,7 @@ export function PreparationQueuePage() {
               <thead>
                 <tr>
                   <th></th>
-                  <SortableTh label="Cycle ID" sortKey="cycleId" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh label="Pharmacy Visit ID" sortKey="pharmacyVisitId" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Patient" sortKey="patient" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="OPD Visit" sortKey="opdVisit" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="BU" sortKey="bu" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
@@ -530,16 +536,28 @@ export function PreparationQueuePage() {
                   </tr>
                 )}
                 {sortedTasks.map((task) => {
-                  const stage = statusStage(task.prepStatus);
-                  const trackClass = stage === 'pending' ? 'tb-alert' : stage === 'underprep' ? 'tb-gold' : 'tb-green';
+                  const stage = stageOf(task.prepStatus);
+                  const trackClass = stage === 'none' || stage === 'called' ? 'tb-alert' : stage === 'recorded' ? 'tb-gold' : 'tb-green';
+                  const canOpen = !!task.pharmacyVisitId;
+                  const opening = openingVisitId === task.id;
                   return (
-                    <tr key={task.id} className={stage === 'pending' ? 'is-urgent' : undefined}>
+                    <tr key={task.id} className={stage === 'none' ? 'is-urgent' : undefined}>
                       <td className="track-bar-cell"><div className={`track-bar ${trackClass}`} /></td>
-                      <td><span className="mono-id">{task.chpId ?? '—'}</span></td>
+                      <td>
+                        {canOpen
+                          ? (
+                            <button type="button" className="mono-id visit-link" disabled={opening} onClick={() => openVisitPopup(task)}>
+                              {opening ? 'Loading…' : task.pharmacyVisitId}
+                            </button>
+                          )
+                          : <span className="mono-id">—</span>}
+                      </td>
                       <td>
                         <div className="patient-cell">
                           <div className="avatar">{initials(task.patient)}</div>
-                          <span className="patient-name">{task.patient ?? '—'}</span>
+                          {canOpen
+                            ? <button type="button" className="patient-name visit-link plain" disabled={opening} onClick={() => openVisitPopup(task)}>{task.patient ?? '—'}</button>
+                            : <span className="patient-name">{task.patient ?? '—'}</span>}
                         </div>
                       </td>
                       <td><span className="mono-id">{task.opdVisit ?? '—'}</span></td>
@@ -570,9 +588,9 @@ export function PreparationQueuePage() {
         {!loading && !error && (
           <div className="table-foot">
             <div className="legend">
-              <span className="legend-item"><span className="legend-dot" style={{ background: 'var(--warning)' }} /> Pending preparation</span>
-              <span className="legend-item"><span className="legend-dot" style={{ background: 'var(--brand-gold)' }} /> Under preparation</span>
-              <span className="legend-item"><span className="legend-dot" style={{ background: 'var(--green-dark)' }} /> Ready for handoff</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: 'var(--warning)' }} /> Not started / Called</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: 'var(--brand-gold)' }} /> Medication recorded</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: 'var(--green-dark)' }} /> Ready / Fulfilled</span>
             </div>
             <div className="foot-count">{sortedTasks.length} of {currentTabTotal} cycles shown</div>
           </div>

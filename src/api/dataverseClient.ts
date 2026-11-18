@@ -192,6 +192,14 @@ export async function updateRecord(entitySetName: string, id: string, item: Reco
   }
 }
 
+export async function deleteRecord(entitySetName: string, id: string, failureMessage: string): Promise<void> {
+  const result = await MicrosoftDataverseService.DeleteRecordWithOrganization(DATAVERSE_ORG_URL, entitySetName, id);
+
+  if (!result.success) {
+    throw new Error(errorMessage(result.error, failureMessage));
+  }
+}
+
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   const chunkSize = 0x8000;

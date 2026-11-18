@@ -367,7 +367,6 @@
 }
 
 /* Columns that used to live only in the disposition panel. */
-.omni-tasks-page .omni-cycle-id { font: 500 12px var(--mono); color: var(--text-primary); }
 .omni-tasks-page .omni-path { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-body); white-space: nowrap; }
 .omni-tasks-page .omni-path svg { font-size: 11px; color: var(--dim); }
 .omni-tasks-page .omni-yn {

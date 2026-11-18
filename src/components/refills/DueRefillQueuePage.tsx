@@ -12,13 +12,17 @@ import {
 } from '../../domain/refillFilters';
 import { DateRangePicker } from '../ui/DateRangePicker';
 import { SegmentedFilter, type FilterTone, type SegmentedOption } from '../ui/SegmentedFilter';
-import { updatePrescriptionStatus, sendTaskToOmni, CrmSendError } from '../../api/refillsApi';
+import { updatePrescriptionStatus, sendTaskToOmni } from '../../api/refillsApi';
 import { getProductsByPrescriptionIds } from '../../api/productsApi';
 import type { PrescriptionRow, ProductSummary } from '../../domain/types';
 import { RefreshButton } from '../ui/RefreshButton';
+import { ExportExcelButton } from '../ui/ExportExcelButton';
+import type { XlsxColumn } from '../../domain/xlsx';
 import { useSort, type SortAccessor } from '../../hooks/useSort';
+import { usePagination, paginateItems } from '../../hooks/usePagination';
 import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 import { SortableTh } from '../ui/SortableTh';
+import { Pagination } from '../ui/Pagination';
 import '../patients/PatientsPage.css';
 import './DueRefillQueuePage.css';
 
@@ -133,6 +137,12 @@ function isNotEligible(row: PrescriptionRow, omniStatus: Record<string, OmniSend
   return row.eligibility !== 'Valid';
 }
 
+const CATEGORY_EXPORT_LABELS: Record<Category, string> = {
+  sent: 'Sent to Omni',
+  ready: 'Ready to Send',
+  'not-eligible': 'Not Eligible'
+};
+
 const QUICK_FILTERS: { key: QuickFilter; label: string; tone?: FilterTone }[] = [
   { key: 'all', label: 'All' },
   { key: 'sent', label: 'Sent to Omni', tone: 'success' },
@@ -234,7 +244,7 @@ export function DueRefillQueuePage() {
     const q = filters.search.trim().toLowerCase();
     if (!q) return rowsData;
     return rowsData.filter((r) =>
-      (r.name ?? '').toLowerCase().includes(q)
+      (r.pharmacyVisitId ?? '').toLowerCase().includes(q)
       || (r.patientName ?? '').toLowerCase().includes(q)
     );
   }, [rowsData, filters.search]);
@@ -246,7 +256,7 @@ export function DueRefillQueuePage() {
   }, [searchFilteredRows, quickFilter, omniStatus]);
 
   const sortAccessors = useMemo<Record<string, SortAccessor<PrescriptionRow>>>(() => ({
-    cycleId: (r) => r.name,
+    pharmacyVisitId: (r) => r.pharmacyVisitId,
     patient: (r) => r.patientName,
     patientMobile: (r) => r.patientMobile,
     bu: (r) => r.businessUnit,
@@ -259,6 +269,31 @@ export function DueRefillQueuePage() {
     dispensed: (r) => (r.dispensed ? 1 : 0)
   }), []);
   const { sorted: sortedRows, sortKey, sortDir, toggleSort } = useSort(filteredRows, sortAccessors);
+
+  // Built here (not at module level) since the Omni column depends on the live send state.
+  const exportColumns = useMemo<XlsxColumn<PrescriptionRow>[]>(() => [
+    { header: 'Pharmacy Visit ID', value: (r) => r.pharmacyVisitId, width: 18 },
+    { header: 'Patient', value: (r) => r.patientName, width: 32 },
+    { header: 'Patient Mobile', value: (r) => r.patientMobile, width: 16 },
+    { header: 'BU', value: (r) => r.businessUnit },
+    { header: 'Pharmacy Name', value: (r) => r.pharmacyName, width: 24 },
+    { header: 'Chronic Status', value: (r) => r.chronicStatus, width: 16 },
+    { header: 'Dispensing Date', value: (r) => (r.monthlyDispensingDate ? formatCycleDue(r.monthlyDispensingDate) : null), width: 16 },
+    { header: 'Dispensed Value', value: (r) => r.dispensedValue, width: 16 },
+    { header: 'Dispensed', value: (r) => (r.dispensed ? 'Yes' : 'No') },
+    { header: 'Eligibility', value: (r) => r.eligibility },
+    { header: 'Availability', value: (r) => r.availability },
+    { header: 'Omni Status', value: (r) => CATEGORY_EXPORT_LABELS[categorize(r, omniStatus)], width: 16 }
+  ], [omniStatus]);
+
+  const { page, pageSize, totalPages, setPage, setPageSize, resetPage } = usePagination(sortedRows.length, 25);
+  const pageRows = useMemo(() => paginateItems(sortedRows, page, pageSize), [sortedRows, page, pageSize]);
+
+  // A filter/search change shrinks or reorders the result set, so go back to
+  // page 1 rather than risk an out-of-range page.
+  useEffect(() => {
+    resetPage();
+  }, [filters, quickFilter, resetPage]);
 
   // Fetches products for whichever of the given prescription ids aren't
   // already cached or already in flight, in ≤50-id batches run in parallel,
@@ -328,8 +363,10 @@ export function DueRefillQueuePage() {
     });
   }
 
+  // Current page only — expanding every filtered row would fetch products for
+  // cycles that aren't even on screen.
   function expandAll() {
-    const ids = sortedRows.map((r) => r.id);
+    const ids = pageRows.map((r) => r.id);
     setExpandedIds(new Set(ids));
     void fetchProducts(ids);
   }
@@ -363,16 +400,11 @@ export function DueRefillQueuePage() {
       await sendTaskToOmni(rowId);
       setOmniStatus((prev) => ({ ...prev, [rowId]: { status: 'sent', at: Date.now() } }));
     } catch (err) {
-      if (err instanceof CrmSendError) {
-        // The Omni task exists, so keep the row locked as sent — re-sending would duplicate it.
-        setOmniStatus((prev) => ({ ...prev, [rowId]: { status: 'sent', at: Date.now() } }));
-      } else {
-        setOmniStatus((prev) => {
-          const next = { ...prev };
-          delete next[rowId];
-          return next;
-        });
-      }
+      setOmniStatus((prev) => {
+        const next = { ...prev };
+        delete next[rowId];
+        return next;
+      });
       throw err;
     }
   }
@@ -656,6 +688,7 @@ export function DueRefillQueuePage() {
 
           <div className="toolbar-summary">
             <span className="sync-note"><FontAwesomeIcon icon={faClockRotateLeft} aria-hidden="true" /> {formatSynced(lastSyncedAt, now)}</span>
+            <ExportExcelButton fileName="due-refill-queue" sheetName="Due Refill Queue" columns={exportColumns} rows={sortedRows} />
             <RefreshButton onRefresh={refresh} />
             <button
               type="button"
@@ -696,14 +729,14 @@ export function DueRefillQueuePage() {
             <input
               type="text"
               className="filter-input"
-              placeholder="Search patient or Cycle ID…"
+              placeholder="Search patient or Pharmacy Visit ID…"
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             />
           </div>
 
           <DateRangePicker<DueRange>
-            label="Cycle Due"
+            label="Dispensing Date"
             activeLabel={dueLabel(filters)}
             presets={DUE_RANGE_PRESETS}
             activePreset={filters.dueRange}
@@ -752,7 +785,7 @@ export function DueRefillQueuePage() {
 
       {!loading && !error && (
         <div className="table-toolbar">
-          <button type="button" className="btn btn-outline btn-sm" onClick={expandAll} disabled={sortedRows.length === 0}>
+          <button type="button" className="btn btn-outline btn-sm" onClick={expandAll} disabled={pageRows.length === 0}>
             <FontAwesomeIcon icon={faAnglesDown} aria-hidden="true" /> Expand All
           </button>
           <button type="button" className="btn btn-outline btn-sm" onClick={collapseAll} disabled={expandedIds.size === 0}>
@@ -775,13 +808,13 @@ export function DueRefillQueuePage() {
                 <tr>
                   <th></th>
                   <th></th>
-                  <SortableTh label="Visit Id" sortKey="cycleId" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh label="Pharmacy Visit ID" sortKey="pharmacyVisitId" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Patient" sortKey="patient" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Patient Mobile" sortKey="patientMobile" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="BU" sortKey="bu" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Pharmacy Name" sortKey="pharmacyName" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Chronic Status" sortKey="chronicStatus" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-                  <SortableTh label="Cycle Due" sortKey="cycleDue" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                  <SortableTh label="Dispensing Date" sortKey="cycleDue" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Dispensed Value" sortKey="dispensedValue" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Dispensed" sortKey="dispensed" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                   <SortableTh label="Eligibility" sortKey="eligibility" activeSortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
@@ -795,7 +828,7 @@ export function DueRefillQueuePage() {
                     <td colSpan={14} className="refill-empty-row">No cycles match the current filters.</td>
                   </tr>
                 )}
-                {sortedRows.map((r) => {
+                {pageRows.map((r) => {
                   const category = categorize(r, omniStatus);
                   const trackClass = category === 'sent' ? 'tb-green' : category === 'ready' ? 'tb-gold' : 'tb-dim';
                   const isExpanded = expandedIds.has(r.id);
@@ -815,7 +848,7 @@ export function DueRefillQueuePage() {
                           </button>
                         </td>
                         <td className="track-bar-cell"><div className={`track-bar ${trackClass}`} /></td>
-                        <td><span className="mono-id">{r.name}</span></td>
+                        <td><span className="mono-id">{r.pharmacyVisitId ?? '—'}</span></td>
                         <td>
                           <div className="patient-cell">
                             <div className="avatar">{initials(r.patientName)}</div>
@@ -855,6 +888,18 @@ export function DueRefillQueuePage() {
             </div>
             <div className="foot-count">{sortedRows.length} of {rowsData.length} cycles shown</div>
           </div>
+        )}
+
+        {!loading && !error && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={sortedRows.length}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="cycles"
+          />
         )}
       </div>
 

@@ -10,6 +10,7 @@ const PATIENT_SELECT = [
   '_cr18c_user_value',
   'chp_insurancecompany',
   'chp_pharmacyname',
+  'chp_doctorvisitid',
   'chp_chronicstatus',
   'cr18c_noofprescriptions',
   'cr18c_noofprescriptions_date',
@@ -44,6 +45,7 @@ function mapToPatient(r: Cr18c_patients): Patient {
 
     insuranceCompany: r.chp_insurancecompany ?? null,
     pharmacyName: r.chp_pharmacyname ?? null,
+    opdVisit: r.chp_doctorvisitid ?? null,
 
     userId: r._cr18c_user_value ?? null,
     userName: getLookupName(r, 'cr18c_username', '_cr18c_user_value'),
@@ -96,6 +98,38 @@ export async function getDistinctPharmacyNames(): Promise<string[]> {
   });
 
   return Array.from(names).sort((a, b) => a.localeCompare(b));
+}
+
+export interface AssignedUserSummary {
+  id: string;
+  name: string;
+  patientCount: number;
+}
+
+/**
+ * Every user that has at least one active patient assigned, with how many —
+ * the pick list for the Registry's "Assigned To" filter. Pages through all
+ * assigned patients (not capped at 500) so the counts are real.
+ */
+export async function getAssignedUsers(): Promise<AssignedUserSummary[]> {
+  const rows = await listAllRecords<Cr18c_patients>('cr18c_patients', {
+    select: ['_cr18c_user_value'],
+    filter: 'statecode eq 0 and _cr18c_user_value ne null'
+  }, 'Failed to load assigned users');
+
+  const byUser = new Map<string, AssignedUserSummary>();
+  rows.forEach((r) => {
+    const id = r._cr18c_user_value;
+    if (!id) return;
+    const existing = byUser.get(id);
+    if (existing) {
+      existing.patientCount++;
+    } else {
+      byUser.set(id, { id, name: getLookupName(r, 'cr18c_username', '_cr18c_user_value') ?? '(no name)', patientCount: 1 });
+    }
+  });
+
+  return Array.from(byUser.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export interface PatientUserAssignment {
